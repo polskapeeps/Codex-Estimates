@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Codex Estimates">
+  <rect width="512" height="512" rx="92" fill="#2d7a4c"/>
+  <rect x="110" y="86" width="292" height="340" rx="28" fill="#ffffff"/>
+  <path d="M154 156h204M154 216h204M154 276h118" stroke="#2d7a4c" stroke-width="28" stroke-linecap="round"/>
+  <circle cx="342" cy="336" r="58" fill="#e6b85c"/>
+  <path d="M316 336h52M342 310v52" stroke="#142119" stroke-width="22" stroke-linecap="round"/>
+</svg>
