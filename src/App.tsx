@@ -821,7 +821,7 @@ function ProjectDetailPage({ focus }: { focus?: "notes" }) {
             </Link>
             <Link className="secondary-action" to={`/projects/${project.id}/print`}>
               <Printer size={18} />
-              <span>Print</span>
+              <span>Print / PDF</span>
             </Link>
           </div>
         </article>
@@ -1499,7 +1499,7 @@ function PrintPage() {
         </Link>
         <button className="primary-action" type="button" onClick={() => window.print()}>
           <Printer size={18} />
-          <span>Print</span>
+          <span>Print / PDF</span>
         </button>
       </div>
 
