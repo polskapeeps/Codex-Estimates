@@ -1,6 +1,7 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
+/// <reference types="vitest/config" />
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -8,30 +9,41 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['app-icon.svg'],
+      includeAssets: ['favicon.svg', 'robots.txt', 'icons/apple-touch-icon.png'],
       manifest: {
-        name: 'Codex Estimates',
-        short_name: 'Estimates',
-        description: 'Mobile-first contractor estimate organizer.',
-        theme_color: '#2d7a4c',
-        background_color: '#f1f4f0',
+        name: 'Estimator',
+        short_name: 'Estimator',
+        description: 'Trades estimating + lead organizer. Painting & general line-item estimates, offline.',
+        theme_color: '#1d4ed8',
+        background_color: '#f8fafc',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/projects',
         scope: '/',
+        start_url: '/',
         icons: [
+          { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
           {
-            src: '/app-icon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any maskable',
+            src: 'icons/icon-512-maskable.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
           },
         ],
       },
       workbox: {
-        navigateFallback: '/index.html',
-        globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+      },
+      devOptions: {
+        enabled: false,
       },
     }),
   ],
-})
+  test: {
+    environment: 'node',
+    globals: true,
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+  },
+});

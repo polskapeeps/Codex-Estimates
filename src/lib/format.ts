@@ -1,40 +1,28 @@
-export const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+import { format, formatDistanceToNowStrict, isValid, parseISO } from 'date-fns';
 
-export const money = (value?: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value ?? 0);
+/** "Jun 6, 2026" */
+export function formatDate(iso?: string): string {
+  if (!iso) return '—';
+  const d = parseISO(iso);
+  return isValid(d) ? format(d, 'MMM d, yyyy') : '—';
+}
 
-export const decimalMoney = (value?: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value ?? 0);
+/** "Jun 6, 2026, 2:30 PM" */
+export function formatDateTime(iso?: string): string {
+  if (!iso) return '—';
+  const d = parseISO(iso);
+  return isValid(d) ? format(d, "MMM d, yyyy, h:mm a") : '—';
+}
 
-export const shortDate = (value?: string) => {
-  if (!value) {
-    return "No date";
-  }
+/** "3 days ago" */
+export function formatRelative(iso?: string): string {
+  if (!iso) return '—';
+  const d = parseISO(iso);
+  return isValid(d) ? `${formatDistanceToNowStrict(d)} ago` : '—';
+}
 
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(value));
-};
-
-export const formatRange = (min?: number, max?: number) => {
-  if (typeof min !== "number" || typeof max !== "number") {
-    return "No estimate";
-  }
-
-  if (Math.round(min) === Math.round(max)) {
-    return money(min);
-  }
-
-  return `${money(min)} - ${money(max)}`;
-};
+/** Title-case a fixed status/enum string for display: "bid_sent" -> "Bid sent". */
+export function humanize(value: string): string {
+  const s = value.replace(/_/g, ' ');
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}

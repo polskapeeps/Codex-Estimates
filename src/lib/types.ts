@@ -1,221 +1,167 @@
-export const LOCAL_USER_ID = "local-owner";
+// Domain types — mirrors ESTIMATOR_SPEC §9 (Rates) and §14 (data model).
+// All money fields are integer CENTS. All timestamps are ISO strings.
 
-export const PROJECT_STATUSES = [
-  "New",
-  "Estimating",
-  "Sent",
-  "Won",
-  "Active",
-  "Lost",
-  "Limbo",
-  "Archived",
-] as const;
+export type Trade = 'painting' | 'general';
 
-export const JOB_CATEGORIES = [
-  "Painting",
-  "Drywall",
-  "Flooring",
-  "Trim",
-  "Handyman",
-  "Construction",
-  "Other",
-] as const;
+export type PrepLevel = 'light' | 'standard' | 'heavy';
 
-export const NOTE_TYPES = [
-  "Site Visit",
-  "Client Request",
-  "Measurement",
-  "Internal",
-  "Follow Up",
-] as const;
+export type LineUnit = 'ea' | 'sqft' | 'linft' | 'hr' | 'day' | 'lump';
 
-export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
-export type JobCategory = (typeof JOB_CATEGORIES)[number];
-export type NoteType = (typeof NOTE_TYPES)[number];
-export type EstimateConfidence = "low" | "medium" | "high";
-export type PaintSuppliedBy = "contractor" | "client";
-export type ScopeType = "interior" | "exterior";
-export type ConditionLevel = "good" | "fair" | "poor";
-export type PrepLevel = "light" | "normal" | "heavy";
-export type ColorChange = "none" | "similar" | "major";
-export type AccessDifficulty = "normal" | "ladder" | "high ceiling" | "tight access";
-export type Occupancy = "empty" | "occupied";
+export type ProjectStatus =
+  | 'lead'
+  | 'estimating'
+  | 'bid_sent'
+  | 'won'
+  | 'lost'
+  | 'on_hold'
+  | 'archived';
 
-export type BusinessSettings = {
+export interface Client {
   id: string;
-  userId: string;
-  businessName: string;
-  ownerName: string;
-  phone: string;
-  email: string;
-  address: string;
-  serviceArea: string;
-  defaultHourlyRate: number;
-  defaultMarkupPercent: number;
-  defaultTaxPercent: number;
-  taxEnabled: boolean;
-  paintCoverageSqftPerGallon: number;
-  paintCostPerGallon: number;
-  wasteFactor: number;
-  defaultCoats: number;
-  suppliesPercent: number;
-  suppliesMinimum: number;
-  standardWindowSqft: number;
-  standardDoorSqft: number;
-  printFooter: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type Client = {
-  id: string;
-  userId: string;
   name: string;
-  phone: string;
-  email: string;
-  company: string;
-  billingAddress: string;
-  notes: string;
+  company?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
-  deletedAt?: string;
-};
+}
 
-export type Project = {
+export interface Project {
   id: string;
-  userId: string;
   clientId: string;
-  title: string;
-  jobCategory: JobCategory;
+  title: string; // short job description
+  address?: string;
+  trade: Trade;
   status: ProjectStatus;
-  siteAddress: string;
-  description: string;
-  desiredStartDate: string;
-  estimateDueDate: string;
-  bidSentAt?: string;
-  wonAt?: string;
-  lostAt?: string;
-  archivedAt?: string;
-  roughTotalMin?: number;
-  roughTotalMax?: number;
-  roughTotalRecommended?: number;
-  confidence?: EstimateConfidence;
   tags: string[];
+  notes: string; // freeform
   createdAt: string;
   updatedAt: string;
-  deletedAt?: string;
-};
+  bidSentAt?: string;
+  decisionAt?: string;
+  photoIds: string[]; // Phase 2 attachments
+  estimateIds: string[];
+}
 
-export type ProjectNote = {
+export interface Room {
   id: string;
-  userId: string;
-  projectId: string;
-  noteType: NoteType;
-  body: string;
-  pinned: boolean;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string;
-};
-
-export type PaintingAreaInput = {
-  id: string;
-  name: string;
-  length: number;
-  width: number;
-  height: number;
-  wallSqft: number;
-  ceilingSqft: number;
-  doors: number;
-  windows: number;
-  trimLinearFeet: number;
-  openingsSqft: number;
-  includeWalls: boolean;
-  includeCeiling: boolean;
-  includeTrim: boolean;
-  includeDoors: boolean;
-  notes: string;
-};
-
-export type PaintingEstimateInput = {
-  scopeType: ScopeType;
-  paintSuppliedBy: PaintSuppliedBy;
+  label: string;
+  length: number; // ft
+  width: number; // ft
+  height: number; // ft (ceiling)
+  walls: boolean;
+  ceiling: boolean;
+  trim: boolean;
+  doors: number; // count
+  windows: number; // count
   coats: number;
-  wallHeight: number;
-  condition: ConditionLevel;
   prepLevel: PrepLevel;
-  colorChange: ColorChange;
-  accessDifficulty: AccessDifficulty;
-  occupancy: Occupancy;
-  prepHours: number;
-  areas: PaintingAreaInput[];
-  scopeSummary: string;
-  exclusions: string;
-};
+  notes?: string;
+}
 
-export type EstimateLineItem = {
+export interface LineItem {
   id: string;
-  category: string;
   description: string;
-  quantity: number;
-  unit: string;
-  laborHoursMin: number;
-  laborHoursMax: number;
-  laborRate: number;
-  laborCostMin: number;
-  laborCostMax: number;
-  materialCostMin: number;
-  materialCostMax: number;
-  fixedCost: number;
-  markupPercent: number;
-  calculatedTotalMin: number;
-  calculatedTotalMax: number;
-  overrideTotal?: number;
-  notes: string;
-};
+  qty: number;
+  unit: LineUnit;
+  unitCost: number; // cents
+  laborHours?: number;
+  fromLibraryId?: string;
+}
 
-export type EstimateResult = {
-  estimateId: string;
-  projectId: string;
-  templateKey: string;
-  subtotalMin: number;
-  subtotalMax: number;
-  materialsMin: number;
-  materialsMax: number;
-  laborHoursMin: number;
-  laborHoursMax: number;
-  laborCostMin: number;
-  laborCostMax: number;
-  markupAmountMin: number;
-  markupAmountMax: number;
-  totalMin: number;
-  totalMax: number;
-  recommendedTotal: number;
-  confidence: EstimateConfidence;
-  warnings: string[];
-  assumptions: string[];
-  lineItems: EstimateLineItem[];
-};
+export interface Totals {
+  materials: number;
+  laborHours: number;
+  labor: number;
+  subtotal: number;
+  markup: number;
+  tax: number;
+  total: number;
+  low: number;
+  high: number; // all cents (except laborHours)
+}
 
-export type Estimate = {
+export interface Estimate {
   id: string;
-  userId: string;
   projectId: string;
-  templateKey: string;
-  versionNumber: number;
-  status: "draft" | "saved";
-  input: PaintingEstimateInput;
-  result: EstimateResult;
+  version: number;
+  trade: Trade;
+  rooms: Room[]; // painting
+  lineItems: LineItem[]; // general
+  ratesSnapshot: Rates; // freeze rates used at calc time
+  totals: Totals;
+  scopeNotes?: string; // shown on PDF
+  status: 'draft' | 'final';
   createdAt: string;
   updatedAt: string;
-  deletedAt?: string;
-};
+}
 
-export type ActivityEvent = {
+export interface LibraryItem {
   id: string;
-  userId: string;
+  description: string;
+  unit: LineUnit;
+  unitCost: number; // cents
+  laborHours?: number;
+  category?: string;
+}
+
+export interface Attachment {
+  // Phase 2
+  id: string;
   projectId: string;
-  eventType: string;
-  eventJson: Record<string, unknown>;
+  blob: Blob;
+  caption?: string;
   createdAt: string;
-};
+}
+
+export interface CompanyInfo {
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  logoDataUrl?: string;
+}
+
+// Single source of truth for every coefficient (ESTIMATOR_SPEC §9).
+// Money values are CENTS. Percentages are decimals (0.20 = 20%).
+export interface Rates {
+  // labor
+  hourlyRate: number; // cents
+  // materials
+  paintCostPerGallon: number; // cents
+  primerCostPerGallon: number; // cents
+  coverageSqftPerGallon: number;
+  sundriesPct: number;
+  // painting production (sqft|linft per hour, per coat, incl cut-in)
+  productionRates: {
+    walls: number;
+    ceiling: number;
+    trim: number;
+  };
+  prepMultipliers: { light: number; standard: number; heavy: number };
+  doorAreaSqft: number;
+  windowAreaSqft: number;
+  doorLaborHrs: number; // per door, incl coats
+  windowLaborHrs: number; // per window, incl coats
+  primerOnHeavyPrep: boolean;
+  // pricing
+  markupPct: number;
+  taxPct: number;
+  taxAppliesTo: 'materials' | 'all' | 'none';
+  confidenceBandPct: number; // +/- band -> low/high
+  // company (for PDF)
+  company: CompanyInfo;
+}
+
+// Shape of a full data export/import payload (Settings backup).
+export interface BackupPayload {
+  schemaVersion: number;
+  exportedAt: string;
+  clients: Client[];
+  projects: Project[];
+  estimates: Estimate[];
+  libraryItems: LibraryItem[];
+  rates: Rates;
+}

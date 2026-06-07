@@ -1,71 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
-  --app-bg: #f1f4f0;
-  --panel: #ffffff;
-  --text: #344038;
-  --text-strong: #142119;
-  --muted: #6c786f;
-  --line: #dce4dc;
-  --green: #2d7a4c;
-  --soft-green: #e7f1e8;
-  --blue: #2e6f9e;
-  --amber: #e6b85c;
-  --red: #b34a4a;
-  --gray: #6f7670;
-  --shadow: 0 18px 45px rgba(36, 48, 39, 0.14);
-  color: var(--text);
-  background: var(--app-bg);
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 16px;
-  line-height: 1.45;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
 }
 
-* {
-  box-sizing: border-box;
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
-  min-width: 320px;
+  @apply bg-slate-50 text-slate-900 antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* iOS safe-area helpers for the fixed bottom tab bar */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Hide native number spinners — the app uses custom steppers */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
   margin: 0;
 }
-
-button,
-input,
-textarea,
-select {
-  letter-spacing: 0;
+input[type='number'] {
+  -moz-appearance: textfield;
 }
 
-h1,
-h2,
-h3,
-p {
-  overflow-wrap: anywhere;
-}
-
-h1 {
-  color: var(--text-strong);
-  font-size: 32px;
-  line-height: 1.15;
-  margin: 0;
-}
-
-h2 {
-  line-height: 1.2;
-}
-
-p {
-  margin: 0;
-}
-
-a {
-  color: inherit;
-}
-
-#root {
-  min-height: 100svh;
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    @apply bg-white;
+  }
 }
