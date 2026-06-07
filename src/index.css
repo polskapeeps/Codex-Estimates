@@ -6,6 +6,10 @@
   color-scheme: light;
 }
 
+.dark {
+  color-scheme: dark;
+}
+
 html,
 body,
 #root {
@@ -15,6 +19,130 @@ body,
 body {
   @apply bg-slate-50 text-slate-900 antialiased;
   -webkit-tap-highlight-color: transparent;
+}
+
+.dark body {
+  @apply bg-slate-950 text-slate-100;
+}
+
+/* Dark-mode retrofit for the existing Tailwind utility-heavy UI. */
+.dark .bg-white,
+.dark .bg-white\/95,
+.dark .bg-white\/97 {
+  background-color: rgb(15 23 42 / 0.96);
+}
+
+.dark .bg-slate-50 {
+  background-color: rgb(15 23 42);
+}
+
+.dark .bg-slate-100 {
+  background-color: rgb(30 41 59);
+}
+
+.dark .bg-slate-200,
+.dark .bg-slate-300 {
+  background-color: rgb(51 65 85);
+}
+
+.dark .bg-brand-50 {
+  background-color: rgb(30 64 175 / 0.28);
+}
+
+.dark .bg-blue-100 {
+  background-color: rgb(30 64 175 / 0.32);
+}
+
+.dark .bg-amber-100 {
+  background-color: rgb(146 64 14 / 0.32);
+}
+
+.dark .bg-green-100 {
+  background-color: rgb(21 128 61 / 0.28);
+}
+
+.dark .bg-red-100,
+.dark .hover\:bg-red-50:hover {
+  background-color: rgb(127 29 29 / 0.32);
+}
+
+.dark .bg-purple-100 {
+  background-color: rgb(107 33 168 / 0.32);
+}
+
+.dark .text-slate-900,
+.dark .text-slate-800 {
+  color: rgb(248 250 252);
+}
+
+.dark .text-slate-700,
+.dark .text-slate-600 {
+  color: rgb(203 213 225);
+}
+
+.dark .text-slate-500 {
+  color: rgb(148 163 184);
+}
+
+.dark .text-slate-400,
+.dark .text-slate-300 {
+  color: rgb(100 116 139);
+}
+
+.dark .text-brand-700,
+.dark .text-brand-800 {
+  color: rgb(147 197 253);
+}
+
+.dark .text-blue-700,
+.dark .text-green-700,
+.dark .text-purple-700 {
+  color: rgb(191 219 254);
+}
+
+.dark .text-amber-800 {
+  color: rgb(253 230 138);
+}
+
+.dark .text-red-700,
+.dark .text-red-600 {
+  color: rgb(252 165 165);
+}
+
+.dark .ring-slate-50,
+.dark .ring-slate-100,
+.dark .ring-slate-200,
+.dark .ring-slate-300 {
+  --tw-ring-color: rgb(51 65 85);
+}
+
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-300 {
+  border-color: rgb(51 65 85);
+}
+
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgb(51 65 85);
+}
+
+.dark .placeholder\:text-slate-400::placeholder {
+  color: rgb(100 116 139);
+}
+
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-slate-100:hover {
+  background-color: rgb(30 41 59);
+}
+
+.dark .hover\:border-slate-300:hover {
+  border-color: rgb(71 85 105);
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  color-scheme: dark;
 }
 
 /* iOS safe-area helpers for the fixed bottom tab bar */

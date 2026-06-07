@@ -9,7 +9,8 @@ import { cn } from '../../lib/cn';
 
 const CONTROL =
   'w-full rounded-xl bg-white px-3 text-slate-900 ring-1 ring-inset ring-slate-300 ' +
-  'placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500';
+  'placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 ' +
+  'dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-700 dark:placeholder:text-slate-500';
 
 interface FieldProps {
   label?: string;
@@ -25,7 +26,7 @@ export function Field({ label, hint, error, required, htmlFor, children, classNa
   return (
     <div className={cn('space-y-1.5', className)}>
       {label && (
-        <label htmlFor={htmlFor} className="block text-sm font-medium text-slate-700">
+        <label htmlFor={htmlFor} className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           {label}
           {required && <span className="ml-0.5 text-red-500">*</span>}
         </label>
@@ -34,7 +35,7 @@ export function Field({ label, hint, error, required, htmlFor, children, classNa
       {error ? (
         <p className="text-xs text-red-600">{error}</p>
       ) : (
-        hint && <p className="text-xs text-slate-500">{hint}</p>
+        hint && <p className="text-xs text-slate-500 dark:text-slate-400">{hint}</p>
       )}
     </div>
   );

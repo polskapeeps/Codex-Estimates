@@ -1,14 +1,18 @@
+import { useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import type { ComponentType } from 'react';
 import {
   ClientsIcon,
   HomeIcon,
   JobsIcon,
+  MoonIcon,
   PlusIcon,
   SettingsIcon,
+  SunIcon,
 } from './icons';
 import { Button, Toaster } from './ui';
 import { cn } from '../lib/cn';
+import { useUI } from '../store/ui';
 
 type IconType = ComponentType<{ size?: number; className?: string }>;
 
@@ -55,6 +59,14 @@ function BrandMark() {
 
 export function AppShell() {
   const navigate = useNavigate();
+  const theme = useUI((s) => s.theme);
+  const toggleTheme = useUI((s) => s.toggleTheme);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle('dark', theme === 'dark');
+    root.style.colorScheme = theme;
+  }, [theme]);
 
   return (
     <div className="min-h-full">
@@ -88,7 +100,10 @@ export function AppShell() {
             </NavLink>
           ))}
         </nav>
-        <div className="mt-auto px-3 text-xs text-slate-400">Local-first · offline ready</div>
+        <div className="mt-auto flex items-center justify-between gap-3 px-3 text-xs text-slate-400">
+          <span>Local-first / offline ready</span>
+          <ThemeButton theme={theme} onToggle={toggleTheme} />
+        </div>
       </aside>
 
       {/* Content */}
@@ -96,6 +111,10 @@ export function AppShell() {
         <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-5 md:pb-10 md:pt-8">
           <Outlet />
         </main>
+      </div>
+
+      <div className="fixed right-3 top-3 z-40 md:hidden">
+        <ThemeButton theme={theme} onToggle={toggleTheme} />
       </div>
 
       {/* Mobile bottom tab bar */}
@@ -120,6 +139,28 @@ export function AppShell() {
 
       <Toaster />
     </div>
+  );
+}
+
+function ThemeButton({
+  theme,
+  onToggle,
+}: {
+  theme: 'dark' | 'light';
+  onToggle: () => void;
+}) {
+  const dark = theme === 'dark';
+  const Icon = dark ? SunIcon : MoonIcon;
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/90 text-slate-600 shadow-sm ring-1 ring-slate-200 backdrop-blur transition-colors hover:bg-slate-50 dark:bg-slate-900/90 dark:text-slate-200 dark:ring-slate-700 dark:hover:bg-slate-800"
+    >
+      <Icon size={19} />
+    </button>
   );
 }
 
