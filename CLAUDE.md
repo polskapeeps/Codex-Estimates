@@ -4,6 +4,11 @@ Local-first, installable **PWA** for a trades business (painting / handyman / ge
 turn on-site notes into a rough **estimate range**, and organize every job as a
 browsable record with a status pipeline. Full spec: [ESTIMATOR_SPEC.md](ESTIMATOR_SPEC.md).
 
+## Current pickup point
+
+Read [HANDOFF.md](HANDOFF.md) first. It records the current branch decision,
+saved comparison branches, verification status, and next actions.
+
 ## Status
 
 | Milestone | State |
@@ -15,7 +20,7 @@ browsable record with a status pipeline. Full spec: [ESTIMATOR_SPEC.md](ESTIMATO
 | M4 Estimate PDF / print + JSON backup | ✅ |
 | M5 Cloud sync (Supabase) | ⛔ Phase 2 — not started |
 | M6 AI smart-notes (`/api/ai-parse`) | ⛔ Phase 2 — not started |
-| M7 Polish (kanban, photos, dark mode, Tauri) | ⛔ Phase 2 — not started |
+| M7 Polish (kanban, photos, dark mode, Tauri) | partial: dark mode done; remaining polish Phase 2 |
 
 **v1 (M0–M4) is complete and usable on phone + desktop from one URL.**
 
