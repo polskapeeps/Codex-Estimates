@@ -1,6 +1,6 @@
 import { estimateRepo, projectRepo } from '../../data/repositories';
 import type { ProjectPatch } from '../../data/repositories';
-import type { LineItem, Rates, Room, Totals, Trade } from '../../lib/types';
+import type { LineItem, PricingMode, Rates, Room, Totals, Trade } from '../../lib/types';
 
 export interface SaveEstimateDraft {
   estimateId?: string; // present => update this estimate
@@ -8,6 +8,7 @@ export interface SaveEstimateDraft {
   clientId: string;
   title: string;
   trade: Trade;
+  pricingMode: PricingMode;
   rooms: Room[];
   lineItems: LineItem[];
   scopeNotes: string;
@@ -29,6 +30,7 @@ export interface SaveResult {
 export async function saveEstimate(draft: SaveEstimateDraft): Promise<SaveResult> {
   const estimateFields = {
     trade: draft.trade,
+    pricingMode: draft.pricingMode,
     rooms: draft.rooms,
     lineItems: draft.lineItems,
     ratesSnapshot: draft.ratesSnapshot,

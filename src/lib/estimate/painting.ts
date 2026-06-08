@@ -1,4 +1,4 @@
-import type { Rates, Room, Totals } from '../types';
+import type { PricingMode, Rates, Room, Totals } from '../types';
 import { roundCents } from '../money';
 import { computeTotals } from './totals';
 
@@ -127,7 +127,11 @@ export function computePainting(rooms: Room[], rates: Rates): PaintingComputatio
   };
 }
 
-export function computePaintingEstimate(rooms: Room[], rates: Rates): PaintingEstimate {
+export function computePaintingEstimate(
+  rooms: Room[],
+  rates: Rates,
+  pricingMode: PricingMode = 'full',
+): PaintingEstimate {
   const computation = computePainting(rooms, rates);
   const totals = computeTotals(
     {
@@ -136,6 +140,7 @@ export function computePaintingEstimate(rooms: Room[], rates: Rates): PaintingEs
       laborHours: computation.laborHours,
     },
     rates,
+    pricingMode,
   );
   return { computation, totals };
 }

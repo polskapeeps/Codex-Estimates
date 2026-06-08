@@ -3,6 +3,8 @@
 
 export type Trade = 'painting' | 'general';
 
+export type PricingMode = 'full' | 'labor_only';
+
 export type PrepLevel = 'light' | 'standard' | 'heavy';
 
 export type LineUnit = 'ea' | 'sqft' | 'linft' | 'hr' | 'day' | 'lump';
@@ -88,6 +90,8 @@ export interface Estimate {
   projectId: string;
   version: number;
   trade: Trade;
+  /** Missing on older saved estimates; treat as "full". */
+  pricingMode?: PricingMode;
   rooms: Room[]; // painting
   lineItems: LineItem[]; // general
   ratesSnapshot: Rates; // freeze rates used at calc time

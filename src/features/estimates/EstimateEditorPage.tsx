@@ -23,12 +23,14 @@ import { useUI } from '../../store/ui';
 import { computePaintingEstimate } from '../../lib/estimate/painting';
 import { computeGeneralEstimate } from '../../lib/estimate/general';
 import { computeTotals } from '../../lib/estimate/totals';
-import type { LineItem, Rates, Room, Totals, Trade } from '../../lib/types';
+import { cn } from '../../lib/cn';
+import type { LineItem, PricingMode, Rates, Room, Totals, Trade } from '../../lib/types';
 
 interface DraftState {
   clientId: string;
   title: string;
   trade: Trade;
+  pricingMode: PricingMode;
   rooms: Room[];
   lineItems: LineItem[];
   scopeNotes: string;
@@ -66,6 +68,7 @@ export function EstimateEditorPage() {
           clientId: sourceProject.clientId,
           title: sourceProject.title,
           trade: editingEstimate.trade,
+          pricingMode: editingEstimate.pricingMode ?? 'full',
           rooms: editingEstimate.rooms.length ? editingEstimate.rooms : [makeNewRoom()],
           lineItems: editingEstimate.lineItems,
           scopeNotes: editingEstimate.scopeNotes ?? '',
@@ -77,6 +80,7 @@ export function EstimateEditorPage() {
           clientId: sourceProject.clientId,
           title: sourceProject.title,
           trade: sourceProject.trade,
+          pricingMode: 'full',
           rooms: [makeNewRoom()],
           lineItems: [],
           scopeNotes: '',
@@ -87,6 +91,7 @@ export function EstimateEditorPage() {
         clientId: '',
         title: '',
         trade: 'painting',
+        pricingMode: 'full',
         rooms: [makeNewRoom()],
         lineItems: [],
         scopeNotes: '',
@@ -97,7 +102,7 @@ export function EstimateEditorPage() {
   const painting = useMemo(
     () =>
       rates && draft?.trade === 'painting'
-        ? computePaintingEstimate(draft.rooms, rates)
+        ? computePaintingEstimate(draft.rooms, rates, draft.pricingMode)
         : null,
     [rates, draft],
   );
@@ -140,6 +145,7 @@ export function EstimateEditorPage() {
         clientId: draft!.clientId,
         title: draft!.title.trim(),
         trade: draft!.trade,
+        pricingMode: draft!.trade === 'painting' ? draft!.pricingMode : 'full',
         rooms: draft!.trade === 'painting' ? draft!.rooms : [],
         lineItems: draft!.trade === 'general' ? draft!.lineItems : [],
         scopeNotes: draft!.scopeNotes,
@@ -160,9 +166,15 @@ export function EstimateEditorPage() {
   const extra =
     draft.trade === 'painting' && painting ? (
       <div className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-        <span>{painting.computation.paintGallons} gal paint</span>
+        <span>
+          {painting.computation.paintGallons} gal paint
+          {draft.pricingMode === 'labor_only' ? ' not included' : ''}
+        </span>
         {painting.computation.primerGallons > 0 && (
-          <span>{painting.computation.primerGallons} gal primer</span>
+          <span>
+            {painting.computation.primerGallons} gal primer
+            {draft.pricingMode === 'labor_only' ? ' not included' : ''}
+          </span>
         )}
         <span>{Math.round(painting.computation.totalAppliedSqft)} sqft applied</span>
       </div>
@@ -219,6 +231,14 @@ export function EstimateEditorPage() {
         <Field label="Trade">
           <TradePicker value={draft.trade} onChange={(trade) => update({ trade })} />
         </Field>
+        {draft.trade === 'painting' && (
+          <Field label="Pricing mode">
+            <PricingModePicker
+              value={draft.pricingMode}
+              onChange={(pricingMode) => update({ pricingMode })}
+            />
+          </Field>
+        )}
       </section>
 
       {/* Calculator */}
@@ -266,6 +286,7 @@ export function EstimateEditorPage() {
 
       <TotalsPanel
         totals={totals}
+        pricingMode={draft.trade === 'painting' ? draft.pricingMode : 'full'}
         extra={extra}
         sticky
         action={
@@ -280,6 +301,38 @@ export function EstimateEditorPage() {
         onClose={() => setClientFormOpen(false)}
         onSaved={(c) => update({ clientId: c.id })}
       />
+    </div>
+  );
+}
+
+function PricingModePicker({
+  value,
+  onChange,
+}: {
+  value: PricingMode;
+  onChange: (value: PricingMode) => void;
+}) {
+  const options: { value: PricingMode; label: string }[] = [
+    { value: 'full', label: 'Full' },
+    { value: 'labor_only', label: 'Labor only' },
+  ];
+  return (
+    <div className="grid grid-cols-2 overflow-hidden rounded-xl ring-1 ring-inset ring-slate-300">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => onChange(option.value)}
+          className={cn(
+            'h-11 text-sm font-medium transition-colors',
+            value === option.value
+              ? 'bg-brand-600 text-white'
+              : 'bg-white text-slate-600 hover:bg-slate-50',
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
     </div>
   );
 }

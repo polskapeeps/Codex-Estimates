@@ -42,6 +42,7 @@ export function EstimatePreviewPage() {
     () => (estimate?.trade === 'general' ? computeGeneral(estimate.lineItems) : null),
     [estimate],
   );
+  const pricingMode = estimate?.pricingMode ?? 'full';
 
   if (!estimate) {
     return (
@@ -145,11 +146,20 @@ export function EstimatePreviewPage() {
       <div className="mb-5">
         <TotalsPanel
           totals={estimate.totals}
+          pricingMode={pricingMode}
           extra={
             painting ? (
               <div className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                <span>{painting.paintGallons} gal paint</span>
-                {painting.primerGallons > 0 && <span>{painting.primerGallons} gal primer</span>}
+                <span>
+                  {painting.paintGallons} gal paint
+                  {pricingMode === 'labor_only' ? ' not included' : ''}
+                </span>
+                {painting.primerGallons > 0 && (
+                  <span>
+                    {painting.primerGallons} gal primer
+                    {pricingMode === 'labor_only' ? ' not included' : ''}
+                  </span>
+                )}
                 <span>{Math.round(painting.totalAppliedSqft)} sqft applied</span>
               </div>
             ) : undefined

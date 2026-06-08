@@ -1,4 +1,4 @@
-import type { Rates, Totals } from '../types';
+import type { PricingMode, Rates, Totals } from '../types';
 import { roundCents } from '../money';
 
 export interface TotalsInput {
@@ -13,18 +13,25 @@ export interface TotalsInput {
  * whole cents once per money step (markup, tax, low, high). `materials` and
  * `labor` arrive already rounded from their module.
  */
-export function computeTotals(input: TotalsInput, rates: Rates): Totals {
-  const { materials, labor, laborHours } = input;
+export function computeTotals(
+  input: TotalsInput,
+  rates: Rates,
+  pricingMode: PricingMode = 'full',
+): Totals {
+  const { labor, laborHours } = input;
+  const materials = pricingMode === 'labor_only' ? 0 : input.materials;
 
   const subtotal = materials + labor;
-  const markup = roundCents(subtotal * rates.markupPct);
+  const markup = pricingMode === 'labor_only' ? 0 : roundCents(subtotal * rates.markupPct);
 
   const taxableBase =
-    rates.taxAppliesTo === 'materials'
-      ? materials
-      : rates.taxAppliesTo === 'all'
-        ? subtotal
-        : 0;
+    pricingMode === 'labor_only'
+      ? 0
+      : rates.taxAppliesTo === 'materials'
+        ? materials
+        : rates.taxAppliesTo === 'all'
+          ? subtotal
+          : 0;
   const tax = roundCents(taxableBase * rates.taxPct);
 
   const total = subtotal + markup + tax;

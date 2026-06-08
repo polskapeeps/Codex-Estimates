@@ -30,6 +30,7 @@ function unitLabel(unit: string): string {
 function headerBlock(ctx: EstimatePdfContext): Content {
   const { company, estimate } = ctx;
   const logo = usableLogo(company.logoDataUrl);
+  const laborOnly = estimate.pricingMode === 'labor_only';
 
   const companyStack: Content[] = [
     { text: company.name || 'Your Company', style: 'company' },
@@ -55,7 +56,11 @@ function headerBlock(ctx: EstimatePdfContext): Content {
       {
         width: 'auto',
         stack: [
-          { text: 'ESTIMATE', style: 'docTitle', alignment: 'right' },
+          {
+            text: laborOnly ? 'LABOR-ONLY ESTIMATE' : 'ESTIMATE',
+            style: 'docTitle',
+            alignment: 'right',
+          },
           {
             text: formatDate(estimate.createdAt),
             alignment: 'right',
@@ -101,6 +106,7 @@ function clientBlock(ctx: EstimatePdfContext): Content {
 
 function paintingBreakdown(ctx: EstimatePdfContext): Content[] {
   const comp = computePainting(ctx.estimate.rooms, ctx.estimate.ratesSnapshot);
+  const laborOnly = ctx.estimate.pricingMode === 'labor_only';
   const body: Content[][] = [
     [
       { text: 'Room', style: 'th' },
@@ -129,8 +135,10 @@ function paintingBreakdown(ctx: EstimatePdfContext): Content[] {
   }
 
   const materialsLine = [
-    `${comp.paintGallons} gal paint`,
-    comp.primerGallons > 0 ? `${comp.primerGallons} gal primer` : null,
+    `${comp.paintGallons} gal paint${laborOnly ? ' not included' : ''}`,
+    comp.primerGallons > 0
+      ? `${comp.primerGallons} gal primer${laborOnly ? ' not included' : ''}`
+      : null,
     `${comp.laborHours.toFixed(1)} labor hrs`,
   ]
     .filter(Boolean)
@@ -177,13 +185,19 @@ function generalBreakdown(ctx: EstimatePdfContext): Content[] {
 
 function totalsBlock(ctx: EstimatePdfContext): Content {
   const t = ctx.estimate.totals;
-  const rows: [string, string][] = [['Materials', formatMoney(t.materials)]];
-  if (t.labor !== 0 || t.laborHours !== 0) {
+  const laborOnly = ctx.estimate.pricingMode === 'labor_only';
+  const rows: [string, string][] = laborOnly
+    ? [[`Labor only (${t.laborHours.toFixed(1)} hrs)`, formatMoney(t.labor)]]
+    : [['Materials', formatMoney(t.materials)]];
+
+  if (!laborOnly && (t.labor !== 0 || t.laborHours !== 0)) {
     rows.push([`Labor (${t.laborHours.toFixed(1)} hrs)`, formatMoney(t.labor)]);
   }
-  rows.push(['Subtotal', formatMoney(t.subtotal)]);
-  rows.push(['Markup', formatMoney(t.markup)]);
-  rows.push(['Tax', formatMoney(t.tax)]);
+  if (!laborOnly) {
+    rows.push(['Subtotal', formatMoney(t.subtotal)]);
+    rows.push(['Markup', formatMoney(t.markup)]);
+    rows.push(['Tax', formatMoney(t.tax)]);
+  }
 
   const body: Content[][] = rows.map(([label, value]) => [
     { text: label, color: MUTED },
@@ -200,7 +214,7 @@ function totalsBlock(ctx: EstimatePdfContext): Content {
           { canvas: [{ type: 'line', x1: 0, y1: 4, x2: 230, y2: 4, lineColor: LINE }] },
           {
             columns: [
-              { text: 'Total', bold: true, fontSize: 13 },
+              { text: laborOnly ? 'Total labor' : 'Total', bold: true, fontSize: 13 },
               { text: formatMoney(t.total), alignment: 'right', bold: true, fontSize: 13 },
             ],
             margin: [0, 6, 0, 0],
@@ -213,7 +227,9 @@ function totalsBlock(ctx: EstimatePdfContext): Content {
             margin: [0, 6, 0, 0],
           },
           {
-            text: 'Rough estimate · final price subject to on-site inspection.',
+            text: laborOnly
+              ? 'Labor-only estimate - materials, markup, and tax not included.'
+              : 'Rough estimate - final price subject to on-site inspection.',
             alignment: 'right',
             color: MUTED,
             fontSize: 8,

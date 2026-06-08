@@ -2,10 +2,11 @@ import { useState, type ReactNode } from 'react';
 import { ChevronDownIcon } from '../../components/icons';
 import { formatMoney, formatMoneyWhole } from '../../lib/money';
 import { cn } from '../../lib/cn';
-import type { Totals } from '../../lib/types';
+import type { PricingMode, Totals } from '../../lib/types';
 
 interface TotalsPanelProps {
   totals: Totals;
+  pricingMode?: PricingMode;
   /** Extra breakdown rows shown above the money rows (e.g. gallons). */
   extra?: ReactNode;
   /** Always-visible action (e.g. Save), shown under the headline. */
@@ -14,9 +15,16 @@ interface TotalsPanelProps {
   sticky?: boolean;
 }
 
-export function TotalsPanel({ totals, extra, action, sticky }: TotalsPanelProps) {
+export function TotalsPanel({
+  totals,
+  pricingMode = 'full',
+  extra,
+  action,
+  sticky,
+}: TotalsPanelProps) {
   const [open, setOpen] = useState(!sticky);
   const showLabor = totals.labor !== 0 || totals.laborHours !== 0;
+  const laborOnly = pricingMode === 'labor_only';
 
   const body = (
     <div className="mx-auto w-full max-w-3xl">
@@ -27,7 +35,7 @@ export function TotalsPanel({ totals, extra, action, sticky }: TotalsPanelProps)
       >
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-            Estimate
+            {laborOnly ? 'Labor only' : 'Estimate'}
           </p>
           <p className="text-2xl font-bold tabular-nums text-slate-900">
             {formatMoneyWhole(totals.total)}
@@ -50,26 +58,43 @@ export function TotalsPanel({ totals, extra, action, sticky }: TotalsPanelProps)
       {open && (
         <div className="border-t border-slate-100 px-4 py-3">
           {extra}
-          <dl className="space-y-1.5 text-sm">
-            <Row label="Materials" value={formatMoney(totals.materials)} />
-            {showLabor && (
+          {laborOnly ? (
+            <dl className="space-y-1.5 text-sm">
               <Row
                 label={`Labor (${totals.laborHours.toFixed(1)} hrs)`}
                 value={formatMoney(totals.labor)}
               />
-            )}
-            <Row label="Subtotal" value={formatMoney(totals.subtotal)} muted />
-            <Row label="Markup" value={formatMoney(totals.markup)} />
-            <Row label="Tax" value={formatMoney(totals.tax)} />
-            <div className="mt-1 flex items-center justify-between border-t border-slate-100 pt-2">
-              <dt className="font-semibold text-slate-900">Total</dt>
-              <dd className="font-bold tabular-nums text-slate-900">
-                {formatMoney(totals.total)}
-              </dd>
-            </div>
-          </dl>
+              <div className="mt-1 flex items-center justify-between border-t border-slate-100 pt-2">
+                <dt className="font-semibold text-slate-900">Total labor</dt>
+                <dd className="font-bold tabular-nums text-slate-900">
+                  {formatMoney(totals.total)}
+                </dd>
+              </div>
+            </dl>
+          ) : (
+            <dl className="space-y-1.5 text-sm">
+              <Row label="Materials" value={formatMoney(totals.materials)} />
+              {showLabor && (
+                <Row
+                  label={`Labor (${totals.laborHours.toFixed(1)} hrs)`}
+                  value={formatMoney(totals.labor)}
+                />
+              )}
+              <Row label="Subtotal" value={formatMoney(totals.subtotal)} muted />
+              <Row label="Markup" value={formatMoney(totals.markup)} />
+              <Row label="Tax" value={formatMoney(totals.tax)} />
+              <div className="mt-1 flex items-center justify-between border-t border-slate-100 pt-2">
+                <dt className="font-semibold text-slate-900">Total</dt>
+                <dd className="font-bold tabular-nums text-slate-900">
+                  {formatMoney(totals.total)}
+                </dd>
+              </div>
+            </dl>
+          )}
           <p className="mt-2 text-xs text-slate-400">
-            Rough estimate · subject to change after inspection.
+            {laborOnly
+              ? 'Materials, markup, and tax not included.'
+              : 'Rough estimate - subject to change after inspection.'}
           </p>
         </div>
       )}

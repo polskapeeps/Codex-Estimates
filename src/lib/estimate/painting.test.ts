@@ -74,6 +74,21 @@ describe('painting engine — spec §17 worked example', () => {
     expect(totals.low).toBe(75989); // −12% = $759.89
     expect(totals.high).toBe(96713); // +12% = $967.13
   });
+
+  it('can bill painting as labor-only while preserving material planning', () => {
+    const { computation, totals: laborOnly } = computePaintingEstimate(
+      [makeRoom()],
+      rates,
+      'labor_only',
+    );
+    expect(computation.materials).toBe(19440);
+    expect(laborOnly.materials).toBe(0);
+    expect(laborOnly.labor).toBe(computation.labor);
+    expect(laborOnly.subtotal).toBe(computation.labor);
+    expect(laborOnly.markup).toBe(0);
+    expect(laborOnly.tax).toBe(0);
+    expect(laborOnly.total).toBe(computation.labor);
+  });
 });
 
 describe('painting engine — behavior', () => {
@@ -153,5 +168,16 @@ describe('totals — tax modes', () => {
     const rates = { ...makeDefaultRates(), taxAppliesTo: 'none' as const };
     const t = computeTotals(base, rates);
     expect(t.tax).toBe(0);
+  });
+
+  it('uses labor only with no materials, markup, or tax', () => {
+    const rates = makeDefaultRates();
+    const t = computeTotals(base, rates, 'labor_only');
+    expect(t.materials).toBe(0);
+    expect(t.labor).toBe(20000);
+    expect(t.subtotal).toBe(20000);
+    expect(t.markup).toBe(0);
+    expect(t.tax).toBe(0);
+    expect(t.total).toBe(20000);
   });
 });
