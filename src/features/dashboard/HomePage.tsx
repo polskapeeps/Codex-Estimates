@@ -71,6 +71,25 @@ export function HomePage() {
         New Estimate
       </Button>
 
+      <Card className="mb-6 border-l-4 border-brand-700 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Window cleaning</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Quick mobile quote for inside/outside glass, screens, tracks, and high access.
+            </p>
+          </div>
+        </div>
+        <Button
+          fullWidth
+          variant="secondary"
+          className="mt-3"
+          onClick={() => navigate('/window-estimator')}
+        >
+          Open window estimator
+        </Button>
+      </Card>
+
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Recent jobs</h2>
         {hasData && (

@@ -10,6 +10,7 @@ import { EstimateEditorPage } from '../features/estimates/EstimateEditorPage';
 import { EstimatePreviewPage } from '../features/estimates/EstimatePreviewPage';
 import { LibraryPage } from '../features/general/LibraryPage';
 import { NotFoundPage } from '../features/NotFoundPage';
+import { WindowEstimatorPage } from '../features/windows/WindowEstimatorPage';
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
       { path: 'estimate/new', element: <EstimateEditorPage /> },
       { path: 'estimate/:estimateId', element: <EstimatePreviewPage /> },
       { path: 'estimate/:estimateId/edit', element: <EstimateEditorPage /> },
+      { path: 'window-estimator', element: <WindowEstimatorPage /> },
       { path: 'library', element: <LibraryPage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: '*', element: <NotFoundPage /> },
