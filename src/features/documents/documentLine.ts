@@ -1,5 +1,23 @@
 import { newId } from '../../lib/ids';
-import type { CalcMode, LineItem, LineUnit, ReasonTag } from '../../lib/types';
+import type { CalcMode, LineItem, LineUnit, RateCategory, RateEntry, ReasonTag } from '../../lib/types';
+
+/** Categories in display order, with the scope heads-up each one must surface. */
+export const CATEGORIES: { value: RateCategory; label: string; warning?: string }[] = [
+  { value: 'painting', label: 'Painting' },
+  {
+    value: 'windows',
+    label: 'Windows',
+    warning:
+      'Check glass for paint overspray first — that’s paint-job scope. Careful with razors on tempered/coated glass.',
+  },
+  {
+    value: 'fixtures',
+    label: 'Fixtures',
+    warning:
+      'Non-licensed handyman scope only: like-for-like swaps & simple installs reusing existing boxes. New wiring, new circuits, or a permit = licensed electrician (you confirm local rules).',
+  },
+  { value: 'general', label: 'General' },
+];
 
 /** UI metadata for each calc mode (v2 §4.1) — labels drive the row editor. */
 export const CALC_MODES: {
@@ -42,5 +60,21 @@ export function makeDocumentLine(mode: CalcMode = 'per_hour'): LineItem {
     unitCost: 0,
     calcMode: mode,
     ...(mode === 'credit' ? { reasonTag: 'courtesy_credit' as ReasonTag } : {}),
+  };
+}
+
+/** Build a pre-filled line from a tapped Rate Book chip (v2 §3). */
+export function makeLineFromRateEntry(entry: RateEntry): LineItem {
+  return {
+    id: newId(),
+    description: entry.label,
+    clientDescription: entry.label,
+    qty: 1,
+    unit: entry.unit,
+    unitCost: entry.defaultRate,
+    calcMode: entry.calcMode,
+    category: entry.category,
+    rateEntryId: entry.id,
+    ...(entry.calcMode === 'credit' ? { reasonTag: 'courtesy_credit' as ReasonTag } : {}),
   };
 }

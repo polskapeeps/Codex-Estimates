@@ -81,4 +81,32 @@ branch prices in float dollars + hardcodes rates — incompatible; mine it for v
 **Verify:** `npm test` 30/30, `npx tsc --noEmit` clean, `npm run build` clean (only the
 known pdfmake chunk-size warning). Not yet driven on a live device — that's the checkpoint.
 
-**STOP — awaiting OK before M2.**
+**STOP — awaiting OK before M2.** → User confirmed ("yes"). Branch pushed to
+`origin/codex/v2` for the Vercel preview / iPhone test.
+
+---
+
+## M2 — Rate Book chips + difficulty modifiers + materials toggle ✅
+
+- **Rate Book chips** in the builder: a category chip row (Painting / Windows / Fixtures /
+  General) surfaces that category's seeded entries as tap-to-add chips (label + default
+  price). Tapping pre-fills a line via `makeLineFromRateEntry` (calcMode, rate, unit,
+  category, rateEntryId provenance). Reads live from the editable store via
+  `useRateBookByCategory`.
+- **Category scope heads-ups** (v2 §3.2 / §3.3 MUST): Windows shows the glass-overspray /
+  tempered-glass caution; Fixtures shows the non-licensed-handyman / licensed-electrician
+  warning. Rendered as an inline amber banner per category.
+- **Difficulty modifiers (§15.C)** — generalized, editable toggle set stored in `Rates`
+  (`difficultyModifiers`, seeded: ladder +10%, heavy prep +15%, tight space +8%, rush +15%).
+  Per-line toggle chips set `modifierIds` + resolved `difficultyPct`; `lineItemAmount`
+  applies `(1 + difficultyPct)` to labor/service lines only — never materials or credits.
+  `ratesRepo.get` now backfills new default fields so older seeded rows stay complete.
+- **Materials in-estimate vs separate (§8)** — already shipped in M1's builder.
+- Tests: +3 (difficulty modifier sum, labor uplift, materials/credit never uplifted).
+  Bozena stays $1,977.89. **33/33 green**, tsc clean, build clean.
+
+**Known gap (deferred):** JSON backup payload doesn't yet include `rateEntries` /
+`properties` (rate book re-seeds at boot; properties would not round-trip). Extend in M4/M5.
+
+**Next:** M3 — full guardrail/warning set (§5 + §15.E), all non-blocking, + internal-vs-client
+view toggle (§6).

@@ -17,7 +17,9 @@ class DexieRatesRepository implements RatesRepository {
    */
   async get(): Promise<Rates> {
     const existing = await db.rates.get(RATES_ID);
-    return existing ? stripId(existing) : makeDefaultRates();
+    // Backfill any fields added in later versions (e.g. difficultyModifiers)
+    // so a row seeded by an older build still reads as a complete Rates object.
+    return existing ? { ...makeDefaultRates(), ...stripId(existing) } : makeDefaultRates();
   }
 
   /** Persist the defaults row on first run (call once, outside a liveQuery). */

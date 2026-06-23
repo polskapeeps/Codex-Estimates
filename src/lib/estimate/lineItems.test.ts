@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { computeDocument, computeDocumentEstimate, lineItemAmount } from './lineItems';
+import {
+  computeDocument,
+  computeDocumentEstimate,
+  difficultyPctFor,
+  lineItemAmount,
+} from './lineItems';
 import { makeDefaultRates } from './defaults';
-import type { LineItem } from '../types';
+import type { DifficultyModifier, LineItem } from '../types';
 
 function line(overrides: Partial<LineItem>): LineItem {
   return {
@@ -41,6 +46,35 @@ describe('lineItemAmount — the five calc modes (v2 §4.1)', () => {
 
   it('credit: always negative regardless of stored sign', () => {
     expect(lineItemAmount(line({ calcMode: 'credit', qty: 1, unitCost: 10000 }))).toBe(-10000);
+  });
+});
+
+describe('difficulty modifiers (v2 §15.C)', () => {
+  const mods: DifficultyModifier[] = [
+    { id: 'access_ladder', label: 'Ladder', pct: 0.1 },
+    { id: 'heavy_prep', label: 'Heavy prep', pct: 0.15 },
+  ];
+
+  it('sums the active modifier percentages', () => {
+    expect(difficultyPctFor(['access_ladder', 'heavy_prep'], mods)).toBeCloseTo(0.25, 10);
+    expect(difficultyPctFor([], mods)).toBe(0);
+    expect(difficultyPctFor(undefined, mods)).toBe(0);
+  });
+
+  it('uplifts a labor line by the difficulty percentage', () => {
+    // 8h × $70 × 1.10 = $616.00
+    expect(
+      lineItemAmount(line({ calcMode: 'per_hour', qty: 8, unitCost: 7000, difficultyPct: 0.1 })),
+    ).toBe(61600);
+  });
+
+  it('never uplifts materials or credits', () => {
+    expect(
+      lineItemAmount(line({ calcMode: 'material', qty: 1, unitCost: 10000, difficultyPct: 0.5 })),
+    ).toBe(10000);
+    expect(
+      lineItemAmount(line({ calcMode: 'credit', qty: 1, unitCost: 5000, difficultyPct: 0.5 })),
+    ).toBe(-5000);
   });
 });
 

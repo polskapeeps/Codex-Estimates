@@ -1,6 +1,17 @@
-import type { CalcMode, LineItem, Rates, Totals } from '../types';
+import type { CalcMode, DifficultyModifier, LineItem, Rates, Totals } from '../types';
 import { roundCents } from '../money';
 import { computeTotals } from './totals';
+
+/** Sum the percentages of the active difficulty modifiers (v2 §15.C). */
+export function difficultyPctFor(
+  ids: string[] | undefined,
+  modifiers: DifficultyModifier[],
+): number {
+  if (!ids?.length) return 0;
+  return modifiers
+    .filter((m) => ids.includes(m.id))
+    .reduce((sum, m) => sum + m.pct, 0);
+}
 
 /**
  * PURE Rate-Book line-item engine (v2 §4.1). Each line's signed cents amount is
@@ -28,25 +39,27 @@ export function bucketOf(calcMode: CalcMode | undefined): LineBucket {
 /**
  * Signed cents for a single line. Credits are returned negative; everything
  * else non-negative. `accessPremiumCents` is a per-unit bump for per_unit lines.
+ * Difficulty modifiers (v2 §15.C) uplift labor/service lines by `difficultyPct`;
+ * they never touch credits (a discount) or materials (a pass-through cost).
  */
 export function lineItemAmount(item: LineItem): number {
   const qty = item.qty || 0;
+  const mod = 1 + (item.difficultyPct ?? 0);
   switch (item.calcMode) {
     case 'per_unit': {
       const per = item.unitCost + (item.accessPremiumCents ?? 0);
-      return roundCents(qty * per);
+      return roundCents(qty * per * mod);
     }
     case 'credit':
       // Stored as a positive magnitude; applied as a negative discount.
       return -Math.abs(roundCents(qty * item.unitCost));
-    case 'flat':
-      // A single typed amount (qty defaults to 1 in the builder).
+    case 'material':
       return roundCents(qty * item.unitCost);
+    case 'flat':
     case 'per_sqft':
     case 'per_hour':
-    case 'material':
     default:
-      return roundCents(qty * item.unitCost);
+      return roundCents(qty * item.unitCost * mod);
   }
 }
 

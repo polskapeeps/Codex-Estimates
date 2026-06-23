@@ -32,6 +32,13 @@ export const DEFAULT_RATES: Rates = {
   taxPct: 0.08,
   taxAppliesTo: 'materials',
   confidenceBandPct: 0.12,
+  // difficulty/uplift toggles (v2 §15.C) — editable; pct is a decimal
+  difficultyModifiers: [
+    { id: 'access_ladder', label: 'Ladder / high access', pct: 0.1 },
+    { id: 'heavy_prep', label: 'Heavy prep / fine detail', pct: 0.15 },
+    { id: 'tight_space', label: 'Tight / occupied space', pct: 0.08 },
+    { id: 'rush', label: 'Rush / after-hours', pct: 0.15 },
+  ],
   // company (for PDF)
   company: {
     name: '',

@@ -119,6 +119,17 @@ export interface LineItem {
   taxable?: boolean;
   /** Provenance: the Rate Book entry whose chip created this line. */
   rateEntryId?: string;
+  /** Active difficulty-modifier ids (v2 §15.C), for UI state. */
+  modifierIds?: string[];
+  /** Resolved sum of the active modifiers' percentages (decimal). Drives calc. */
+  difficultyPct?: number;
+}
+
+/** A generalized difficulty/uplift toggle (v2 §15.C). Pct is a decimal (0.10 = +10%). */
+export interface DifficultyModifier {
+  id: string;
+  label: string;
+  pct: number;
 }
 
 /** A Rate Book entry — an editable, tappable quick-select rate (v2 §3). */
@@ -239,6 +250,8 @@ export interface Rates {
   taxPct: number;
   taxAppliesTo: 'materials' | 'all' | 'none';
   confidenceBandPct: number; // +/- band -> low/high
+  // v2 §15.C: editable difficulty/uplift toggles (the only home for these %s)
+  difficultyModifiers: DifficultyModifier[];
   // company (for PDF)
   company: CompanyInfo;
 }

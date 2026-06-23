@@ -4,6 +4,7 @@ import { addDays } from 'date-fns';
 import {
   Button,
   Card,
+  Chip,
   Field,
   Input,
   PageHeader,
@@ -13,14 +14,34 @@ import {
 import { DownloadIcon, PrinterIcon, TrashIcon } from '../../components/icons';
 import { TotalsPanel } from '../estimates/TotalsPanel';
 import { saveEstimate } from '../estimates/saveEstimate';
-import { useClients, useRates } from '../../data/hooks';
+import { useClients, useRateBookByCategory, useRates } from '../../data/hooks';
 import { useUI } from '../../store/ui';
-import { bucketOf, computeDocumentEstimate, lineItemAmount } from '../../lib/estimate/lineItems';
+import {
+  bucketOf,
+  computeDocumentEstimate,
+  difficultyPctFor,
+  lineItemAmount,
+} from '../../lib/estimate/lineItems';
 import { buildQuoteDocDefinition, type QuoteLine } from '../pdf/quotePdf';
 import { downloadEstimatePdf, printEstimatePdf } from '../pdf/pdfClient';
 import { centsToDollars, dollarsToCents, formatMoney } from '../../lib/money';
-import { CALC_MODES, REASON_TAGS, calcModeMeta, makeDocumentLine } from './documentLine';
-import type { CalcMode, LineItem, MaterialsMode, ReasonTag } from '../../lib/types';
+import {
+  CALC_MODES,
+  CATEGORIES,
+  REASON_TAGS,
+  calcModeMeta,
+  makeDocumentLine,
+  makeLineFromRateEntry,
+} from './documentLine';
+import type {
+  CalcMode,
+  DifficultyModifier,
+  LineItem,
+  MaterialsMode,
+  RateCategory,
+  RateEntry,
+  ReasonTag,
+} from '../../lib/types';
 
 const QUICK_ADD: CalcMode[] = ['per_hour', 'per_unit', 'material', 'credit'];
 
@@ -35,11 +56,15 @@ export function DocumentBuilderPage() {
   const [jobTitle, setJobTitle] = useState('');
   const [jobAddress, setJobAddress] = useState('');
   const [materialsMode, setMaterialsMode] = useState<MaterialsMode>('in_estimate');
+  const [category, setCategory] = useState<RateCategory>('painting');
   const [lines, setLines] = useState<LineItem[]>([]);
   const [scopeNotes, setScopeNotes] = useState('');
   const [busy, setBusy] = useState(false);
 
   const selectedClient = clients?.find((c) => c.id === clientId);
+  const chips = useRateBookByCategory(category);
+  const categoryMeta = CATEGORIES.find((c) => c.value === category);
+  const modifiers = rates?.difficultyModifiers ?? [];
 
   const estimate = useMemo(
     () => (rates ? computeDocumentEstimate(lines, rates, { materialsMode }) : null),
@@ -54,6 +79,9 @@ export function DocumentBuilderPage() {
   }
   function add(mode: CalcMode) {
     setLines((prev) => [...prev, makeDocumentLine(mode)]);
+  }
+  function addFromEntry(entry: RateEntry) {
+    setLines((prev) => [...prev, makeLineFromRateEntry(entry)]);
   }
 
   function buildCtx() {
@@ -194,6 +222,38 @@ export function DocumentBuilderPage() {
           </Field>
         </Card>
 
+        <Card className="space-y-3 p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Rate Book — tap to add
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map((c) => (
+              <Chip key={c.value} active={category === c.value} onClick={() => setCategory(c.value)}>
+                {c.label}
+              </Chip>
+            ))}
+          </div>
+          {categoryMeta?.warning && (
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-inset ring-amber-200 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900">
+              {categoryMeta.warning}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {(chips ?? []).length === 0 ? (
+              <p className="text-sm text-slate-400">No rates in this category yet.</p>
+            ) : (
+              chips!.map((entry) => (
+                <Chip key={entry.id} onClick={() => addFromEntry(entry)}>
+                  {entry.label}
+                  <span className="ml-1.5 text-xs opacity-70">
+                    {formatMoney(entry.defaultRate)}
+                  </span>
+                </Chip>
+              ))
+            )}
+          </div>
+        </Card>
+
         <div>
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
             Line items
@@ -208,6 +268,7 @@ export function DocumentBuilderPage() {
               <LineRow
                 key={item.id}
                 item={item}
+                modifiers={modifiers}
                 onChange={(it) => update(i, it)}
                 onRemove={() => remove(i)}
               />
@@ -264,16 +325,20 @@ export function DocumentBuilderPage() {
 
 function LineRow({
   item,
+  modifiers,
   onChange,
   onRemove,
 }: {
   item: LineItem;
+  modifiers: DifficultyModifier[];
   onChange: (item: LineItem) => void;
   onRemove: () => void;
 }) {
   const meta = calcModeMeta(item.calcMode);
   const isCredit = item.calcMode === 'credit';
   const isPerUnit = item.calcMode === 'per_unit';
+  // Materials and credits don't take difficulty uplift (see lineItemAmount).
+  const showModifiers = !isCredit && item.calcMode !== 'material' && modifiers.length > 0;
   const amount = lineItemAmount(item);
 
   const set = <K extends keyof LineItem>(key: K, value: LineItem[K]) =>
@@ -283,6 +348,12 @@ function LineRow({
     const next: LineItem = { ...item, calcMode: mode, unit: calcModeMeta(mode).unit };
     if (mode === 'credit' && !next.reasonTag) next.reasonTag = 'courtesy_credit';
     onChange(next);
+  }
+
+  function toggleModifier(id: string) {
+    const active = item.modifierIds ?? [];
+    const next = active.includes(id) ? active.filter((m) => m !== id) : [...active, id];
+    onChange({ ...item, modifierIds: next, difficultyPct: difficultyPctFor(next, modifiers) });
   }
 
   return (
@@ -363,6 +434,24 @@ function LineRow({
           </LabeledField>
         )}
       </div>
+
+      {showModifiers && (
+        <div>
+          <p className="mb-1.5 text-[11px] font-medium text-slate-500">Difficulty</p>
+          <div className="flex flex-wrap gap-1.5">
+            {modifiers.map((m) => (
+              <Chip
+                key={m.id}
+                active={(item.modifierIds ?? []).includes(m.id)}
+                onClick={() => toggleModifier(m.id)}
+              >
+                {m.label}
+                <span className="ml-1 text-xs opacity-70">+{Math.round(m.pct * 100)}%</span>
+              </Chip>
+            ))}
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
