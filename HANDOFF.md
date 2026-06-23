@@ -1,139 +1,126 @@
 # Estimator Handoff
 
-Last updated: 2026-06-07
+Last updated: 2026-06-22
 
-## Current Decision
+> **This file supersedes the old 2026-06-07 handoff** (which pointed at `master` /
+> the v1 Claude-spec build + dark mode and is now OUTDATED). Active work is the
+> **PK Estimator v2** build on branch **`codex/v2`**. Read this top to bottom
+> before touching anything.
 
-Use `Codex Estimates` as the active repo and `master` as the active production branch.
+## ⚠️ Possible parallel sessions
 
-The app on `master` is the Claude-spec build, plus a dark-mode pass. It is the build the user is testing through Vercel now.
+Another agent session may be building v2 too. Before you commit:
+1. `git fetch origin && git log --oneline -1 origin/codex/v2` — make sure you're not
+   behind. Last known HEAD from this session: **`c685583` (M2)**.
+2. If `origin/codex/v2` is ahead of you, `git pull --ff-only` first and re-read
+   `BUILD_LOG.md` — it's the authoritative running record of what's actually built.
+3. Don't force-push. Don't rebase shared history. Commit per milestone.
 
-Active repo:
+## Current pickup point
 
-`C:\Users\Habad\Documents\Code\Repos\Codex Estimates`
+- **Branch:** `codex/v2` (created off `codex/labor-only-simplification`), pushed to
+  `origin/codex/v2`. NOT merged to `master`.
+- **What this is:** building **PK Estimator v2** per `ESTIMATOR_SPEC_v2.md`. This pass is
+  **LOCAL ONLY** (Dexie/IndexedDB). No Supabase / auth / cloud sync / cloud photos — that is
+  an explicit separate follow-up, do not start it.
+- **Done (committed + pushed):**
+  - **M0** — locked the v2 §4.2 totals formula. The Bozena job (`materials $534.60`,
+    `labor $1,078.00`, 20% markup, 8% tax on materials only) computes to **$1,977.89**;
+    this is pinned in `src/lib/estimate/totals.test.ts` and MUST stay green forever.
+  - **M1** ⛔ checkpoint (passed — user OK'd) — v2 data model through the repo layer
+    (RateEntry, Property, extended LineItem/Project/Estimate; Dexie v2 additive migration);
+    the line-item calc engine (5 calc modes + credit) in `src/lib/estimate/lineItems.ts`;
+    a quote builder at route `/quote/new` that exports a clean **Quote PDF** via pdfmake.
+  - **M2** — Rate Book tap-chips (4 categories preloaded from §3) + generalized difficulty
+    modifiers (§15.C) + materials in-estimate/separate toggle (§8).
+- **Next: M3** — full **non-blocking** guardrail/warning set (§5 + §15.E: effective-hourly
+  floor, ceiling-giveaway, window-standalone, intentional-discount/reason-tag, job-minimum,
+  no-setup-time, missing-materials, no-markup, ladder-without-modifier, vague-scope,
+  missing-expiration, missing-due-date) **plus** the internal-vs-client view toggle (§6).
+  Then M4 (estimate→quote→invoice, change orders, deposits, receipt/change-order PDFs),
+  then M5 (client/property screens, local photos, dashboard, mobile nav, dark theme).
 
-Current production branch:
+## Authoritative docs (read in this order)
 
-`master` at `1b2b429 Add dark mode theme`
+1. `BUILD_LOG.md` — **the running record.** Exactly what changed per milestone + how to test.
+2. `ESTIMATOR_SPEC_v2.md` — the v2 spec. **v2 wins all conflicts with v1.**
+3. `ESTIMATOR_SPEC.md` (v1) + `CLAUDE.md` — architecture baseline + hard rules.
 
-## Branch Map
+Note: the milestone list references a **§15 (15.A–15.K)** that is NOT present in the spec
+file (it ends at §14). Build §15 items from the milestone bullets + best judgment; flag
+genuine ambiguity to the user rather than guessing.
 
-- `master`: active app. Claude-spec implementation plus dark mode.
-- `codex/claudes-spec`: older branch pointing at `46392f9`; now redundant because `master` moved beyond it.
-- `codex/original-master-build`: saved copy of the original Codex/raw master build at `7b89bfa`. Keep this for feature mining and comparison.
+## Confirmed decisions (do not re-litigate)
 
-GitHub remote:
+- **§15 source:** build from the milestone bullets (no §15 text exists).
+- **Branch:** `codex/v2` off `codex/labor-only-simplification` (keeps labor-only mode, which
+  pairs with v2 §8 materials-separate).
+- **Windows (§3.2 / Decision #5):** **REBUILD** as a Rate Book category. The
+  `origin/feature/window-estimator` branch is architecturally incompatible (prices in float
+  dollars, hardcodes its own rate table, bypasses the repo + shared totals). Mine it for
+  rate values / presets / scope wording ONLY. (Currently windows exist as a Rate Book
+  category from §3.2 defaults; a richer in/out + ground/2nd-story flow can come later.)
+- **Branding (Decision #4):** default PWA name "PK Estimator" + PDF header
+  "PK Paints & Renovations", but everything stays user-editable in Settings.
 
-`https://github.com/polskapeeps/Codex-Estimates.git`
+## Hard constraints (must hold every milestone)
 
-The old/raw build is preserved remotely as:
+1. **Money is integer CENTS** everywhere internally; format only at display
+   (`src/lib/money.ts`). Percentages are decimals (0.20 = 20%).
+2. **No pricing/rate numbers outside the stores.** Coefficients live only in
+   `src/lib/estimate/defaults.ts` (Rates seed) and `src/lib/estimate/rateBook.ts`
+   (Rate Book seed). Engine reads them from the passed-in `Rates` / line items.
+3. **No Dexie outside `src/data/repositories/`.** Components read via `useLiveQuery`
+   hooks in `src/data/hooks.ts`, write via repo methods. This is the cloud-sync seam — keep it.
+4. **Engines are pure + unit-tested.** `src/lib/estimate/{painting,general,totals,lineItems}.ts`
+   take inputs + `Rates` and return numbers — no UI, no I/O.
+5. **PDFs use pdfmake → iOS share/print sheet (AirPrint).** Never HTML-to-PDF / browser print.
+6. Keep the **Bozena $1,977.89 test green.** If you change rounding, update + document the test.
 
-`origin/codex/original-master-build`
-
-## What Happened
-
-1. The repo originally had a lean Codex MVP on `master`.
-2. A Claude-written spec was used to build a fuller estimator app on `codex/claudes-spec`.
-3. That Claude-spec branch tested cleanly and became the chosen direction.
-4. `master` was fast-forwarded to the Claude-spec branch.
-5. The original raw `master` build was preserved as `codex/original-master-build`.
-6. Dark mode was added on `master` and pushed.
-
-## Current App Shape
-
-The current app is a local-first PWA for estimating and lead organization:
-
-- React + TypeScript + Vite
-- Tailwind CSS
-- Dexie / IndexedDB local storage
-- Repository layer under `src/data/repositories`
-- Painting estimate engine with tests
-- General line-item estimator
-- Client/job organizer and status pipeline
-- Settings/rates editor
-- JSON export/import backup
-- PDF export/print via `pdfmake`
-- Dark mode default with persisted light/dark toggle
-
-## Verification Already Run
-
-After adopting the Claude-spec build:
-
-- `npm test` passed: 16/16
-- `npm run build` passed
-
-After adding dark mode:
-
-- `npm test` passed: 16/16
-- `npm run build` passed
-- Local production preview checked on mobile viewport:
-  - Home
-  - New Estimate
-  - Settings
-  - Theme toggle light/dark
-- Browser console errors: none observed
-
-Known non-blocking warnings:
-
-- Vite build warns about large `pdfmake` chunks.
-- `npm audit` previously reported 6 issues: 5 moderate, 1 critical. The critical one is in dev/test tooling (`vitest`) and should be cleaned up later, but it has not blocked builds.
-
-## Important Compatibility Note
-
-The active Claude-spec build does not use the same IndexedDB database name or data shape as the original raw build.
-
-Original raw build:
-
-- DB name: `codex-estimates`
-- Branch: `codex/original-master-build`
-
-Current Claude-spec build:
-
-- DB name: `estimator`
-- Branch: `master`
-
-That means existing browser data from the original raw build will not automatically appear in the current build. If old data ever matters, add a migration/import path before relying on it.
-
-## Suggested Next Actions
-
-Immediate testing path:
-
-1. Deploy `master` through Vercel.
-2. On mobile, test:
-   - Create client
-   - Create job
-   - Create painting estimate
-   - Save and reopen estimate
-   - Create general line-item estimate
-   - Export/print PDF
-   - Export/import JSON backup
-   - Refresh/reopen and confirm data persists
-3. Record bugs found during real use.
-
-Likely follow-up improvements:
-
-- Fix any bugs from the mobile/Vercel test.
-- Re-add useful scripts from original raw build if needed:
-  - `dev:lan`
-  - `preview:lan`
-  - `lint`
-- Consider pulling useful concepts from `codex/original-master-build`:
-  - due dates
-  - notes/activity log
-  - simpler print flow
-  - newer Vite/React tooling
-- Clean dependency audit issues.
-- Consider deleting `codex/claudes-spec` after testing, since `master` is now the chosen branch.
-
-## Ground Rules For Future Agents
-
-- Do not reset or rewrite `master` casually. It is the active chosen build.
-- Keep `codex/original-master-build` as the preserved old build unless the user explicitly says to delete it.
-- Work from `C:\Users\Habad\Documents\Code\Repos\Codex Estimates` unless the user clearly asks for another repo.
-- Treat `CLAUDE.md` and `ESTIMATOR_SPEC.md` as project context.
-- Before shipping changes, run:
+## How to run / test
 
 ```bash
-npm test
-npm run build
+npm test                 # vitest — expect 33/33 green (incl. the locked Bozena test)
+npm run build            # tsc --noEmit && vite build — must pass (pdfmake chunk-size
+                         # warning is known + non-blocking)
+npm run dev -- --host    # LAN dev server; open the printed Network: URL on an iPhone
+                         # (same Wi-Fi) to test AirPrint from Safari
 ```
+
+**Device testing:** push `codex/v2` and use the Vercel preview (HTTPS, PWA install), or the
+LAN command above. **Math check:** New Quote → add a Per-hour line (20h × $53.90 = $1,078.00)
++ a Material line ($534.60) → total must read **$1,977.89**. **Print check:** Export/Print
+quote → iOS share sheet → AirPrint; the PDF prints scope language only (no hours/rates).
+
+## Known gaps / watch-outs
+
+- **JSON backup is incomplete:** `BackupPayload` (`src/lib/types.ts` + `backup.ts`) does NOT
+  yet include `rateEntries` or `properties`. Rate Book re-seeds at boot, but properties would
+  not round-trip an export/import. Extend backup before relying on it (slated M4/M5).
+- The new quote flow saves as an `Estimate` with `docType:'quote'`, `trade:'general'`. The
+  existing estimate preview + `estimatePdf` were made calc-mode-aware so saved quotes display
+  correctly in ONE flow — don't fork a parallel preview.
+- `Property` entity + repo exist and seed nothing; the Property UI screen is M5.
+- Difficulty-modifier percentages live in `Rates.difficultyModifiers` (editable). A Settings
+  UI to edit the Rate Book + modifiers isn't built yet — repos support it; add UI when needed.
+- `ratesRepo.get` backfills new default Rates fields onto older seeded rows — keep that when
+  adding new Rates fields.
+
+## Branch map
+
+- `codex/v2` — **active v2 build** (this work). Pushed to origin.
+- `codex/labor-only-simplification` — v2's parent; adds labor-only estimate mode. Not merged.
+- `master` — v1 production (Claude-spec build + dark mode). The old prod branch; the user
+  tests it via Vercel. **Do not reset/rewrite it casually.**
+- `codex/original-master-build` — preserved original raw Codex build. Keep unless the user
+  says delete.
+- `origin/feature/window-estimator` — old standalone window calculator. Reference only
+  (incompatible; see Windows decision above).
+
+## Ground rules for the next agent
+
+- Work from `C:\Users\Habad\Documents\Code\Repos\Codex Estimates` on `codex/v2`.
+- Commit after each milestone; keep `BUILD_LOG.md` updated. Run `npm test` + `npm run build`
+  before committing.
+- If the spec is ambiguous or conflicts, ASK the user rather than guessing.
+- If you run low on context: stop, commit, update `BUILD_LOG.md`, and state the resume point.
