@@ -28,6 +28,22 @@ export type MaterialsMode = 'in_estimate' | 'separate';
 /** Document lifecycle type (v2 §7). v1 estimates are implicitly 'estimate'. */
 export type DocType = 'estimate' | 'quote' | 'invoice';
 
+export type DocumentStatus =
+  | 'draft'
+  | 'sent'
+  | 'accepted'
+  | 'scheduled'
+  | 'completed'
+  | 'invoiced'
+  | 'paid'
+  | 'lost'
+  | 'on_hold'
+  | 'archived';
+
+export type PaidStatus = 'unpaid' | 'partial' | 'paid';
+
+export type PaymentMethod = 'cash' | 'check' | 'card' | 'zelle' | 'venmo' | 'other';
+
 export type PrepLevel = 'light' | 'standard' | 'heavy';
 
 export type LineUnit = 'ea' | 'sqft' | 'linft' | 'hr' | 'day' | 'lump';
@@ -194,9 +210,19 @@ export interface Estimate {
   scopeNotes?: string; // shown on PDF
   /** Quote expiration date (v2 §7). Required for quotes once lifecycle lands. */
   validUntil?: string;
+  /** Invoice issue date (v2 §7). */
+  issueDate?: string;
   /** Invoice due date (v2 §7). Required for invoices once lifecycle lands. */
   dueDate?: string;
-  status: 'draft' | 'final';
+  /** Document that this one was converted from (Estimate → Quote → Invoice). */
+  sourceDocumentId?: string;
+  invoiceNumber?: string;
+  terms?: string;
+  amountDue?: number;
+  paidStatus?: PaidStatus;
+  paymentMethod?: PaymentMethod;
+  paidDate?: string;
+  status: DocumentStatus;
   createdAt: string;
   updatedAt: string;
 }

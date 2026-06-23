@@ -71,6 +71,16 @@ function headerBlock(ctx: EstimatePdfContext): Content {
             margin: [0, 2, 0, 0],
           },
           { text: `Version ${estimate.version}`, alignment: 'right', color: MUTED, fontSize: 9 },
+          ...(estimate.docType === 'invoice' && estimate.invoiceNumber
+            ? [
+                {
+                  text: estimate.invoiceNumber,
+                  alignment: 'right',
+                  color: MUTED,
+                  fontSize: 9,
+                } as Content,
+              ]
+            : []),
           ...(estimate.docType === 'quote' && estimate.validUntil
             ? [
                 {
@@ -96,6 +106,57 @@ function headerBlock(ctx: EstimatePdfContext): Content {
     ],
     margin: [0, 0, 0, 14],
   };
+}
+
+function invoiceInfoBlock(ctx: EstimatePdfContext): Content[] {
+  const { estimate } = ctx;
+  if (estimate.docType !== 'invoice') return [];
+  const amountDue = estimate.amountDue ?? estimate.totals.total;
+  const rows: Content[][] = [
+    [
+      { text: 'Invoice #', style: 'label' },
+      { text: estimate.invoiceNumber ?? '—', bold: true },
+      { text: 'Amount due', style: 'label' },
+      { text: formatMoney(amountDue), bold: true, alignment: 'right' },
+    ],
+    [
+      { text: 'Issue date', style: 'label' },
+      { text: formatDate(estimate.issueDate ?? estimate.createdAt) },
+      { text: 'Due', style: 'label' },
+      { text: formatDate(estimate.dueDate), alignment: 'right' },
+    ],
+    [
+      { text: 'Terms', style: 'label' },
+      { text: estimate.terms ?? 'Due on receipt' },
+      { text: 'Payment', style: 'label' },
+      { text: paymentMethodLabel(estimate.paymentMethod), alignment: 'right' },
+    ],
+  ];
+
+  return [
+    ...(estimate.paidStatus === 'paid'
+      ? [
+          {
+            text: 'PAID',
+            alignment: 'right',
+            bold: true,
+            color: '#15803d',
+            fontSize: 20,
+            margin: [0, 0, 0, 4],
+          } as Content,
+        ]
+      : []),
+    {
+      table: { widths: ['auto', '*', 'auto', '*'], body: rows },
+      layout: {
+        hLineWidth: () => 0,
+        vLineWidth: () => 0,
+        paddingTop: () => 2,
+        paddingBottom: () => 2,
+      },
+      margin: [0, 8, 0, 0],
+    },
+  ];
 }
 
 function clientBlock(ctx: EstimatePdfContext): Content {
@@ -241,6 +302,8 @@ function generalBreakdown(ctx: EstimatePdfContext): Content[] {
 function totalsBlock(ctx: EstimatePdfContext): Content {
   const t = ctx.estimate.totals;
   const laborOnly = ctx.estimate.pricingMode === 'labor_only';
+  const isInvoice = ctx.estimate.docType === 'invoice';
+  const amountDue = ctx.estimate.amountDue ?? t.total;
   const rows: [string, string][] = laborOnly
     ? [[`Labor only (${t.laborHours.toFixed(1)} hrs)`, formatMoney(t.labor)]]
     : [['Materials', formatMoney(t.materials)]];
@@ -270,8 +333,13 @@ function totalsBlock(ctx: EstimatePdfContext): Content {
           { canvas: [{ type: 'line', x1: 0, y1: 4, x2: 230, y2: 4, lineColor: LINE }] },
           {
             columns: [
-              { text: laborOnly ? 'Total labor' : 'Total', bold: true, fontSize: 13 },
-              { text: formatMoney(t.total), alignment: 'right', bold: true, fontSize: 13 },
+              { text: isInvoice ? 'Amount due' : laborOnly ? 'Total labor' : 'Total', bold: true, fontSize: 13 },
+              {
+                text: formatMoney(isInvoice ? amountDue : t.total),
+                alignment: 'right',
+                bold: true,
+                fontSize: 13,
+              },
             ],
             margin: [0, 6, 0, 0],
           },
@@ -285,6 +353,8 @@ function totalsBlock(ctx: EstimatePdfContext): Content {
           {
             text: laborOnly
               ? 'Labor-only estimate - materials, markup, and tax not included.'
+              : isInvoice
+                ? `${ctx.estimate.terms ?? 'Due on receipt'} · Payment: ${paymentMethodLabel(ctx.estimate.paymentMethod)}`
               : 'Rough estimate - final price subject to on-site inspection.',
             alignment: 'right',
             color: MUTED,
@@ -375,9 +445,15 @@ export function buildEstimateDocDefinition(ctx: EstimatePdfContext): TDocumentDe
       headerBlock(ctx),
       { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineColor: LINE }], margin: [0, 0, 0, 12] },
       clientBlock(ctx),
+      ...invoiceInfoBlock(ctx),
       ...breakdown,
       totalsBlock(ctx),
       ...notesAndSignature(ctx),
     ],
   };
+}
+
+function paymentMethodLabel(method: string | undefined): string {
+  if (!method) return 'Cash';
+  return method.charAt(0).toUpperCase() + method.slice(1);
 }

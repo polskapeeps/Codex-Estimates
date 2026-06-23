@@ -106,6 +106,7 @@ export function JobDetailPage() {
         <ul className="mb-5 space-y-2">
           {[...estimates].reverse().map((est) => {
             const warningCount = viewMode === 'internal' ? guardrailCount(est, project) : 0;
+            const chain = chainLabel(est, estimates);
             return (
               <li key={est.id}>
                 <Link
@@ -121,8 +122,13 @@ export function JobDetailPage() {
                     <p className="truncate text-xs text-slate-500">
                       {viewMode === 'client'
                         ? scopeSummary(est)
-                        : formatRange(est.totals.low, est.totals.total, est.totals.high)}
+                        : chain || formatRange(est.totals.low, est.totals.total, est.totals.high)}
                     </p>
+                    {viewMode === 'internal' && chain && (
+                      <p className="truncate text-xs text-slate-400">
+                        {formatRange(est.totals.low, est.totals.total, est.totals.high)}
+                      </p>
+                    )}
                   </div>
                   {warningCount > 0 ? (
                     <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
@@ -254,6 +260,13 @@ function scopeSummary(est: Estimate): string {
       .slice(0, 2)
       .join(' · ') || est.scopeNotes || 'Scope to be confirmed'
   );
+}
+
+function chainLabel(est: Estimate, estimates: Estimate[]): string {
+  if (!est.sourceDocumentId) return '';
+  const source = estimates.find((candidate) => candidate.id === est.sourceDocumentId);
+  if (!source) return 'Converted from another document';
+  return `Converted from ${(source.docType ?? 'estimate').toUpperCase()} v${source.version}`;
 }
 
 function NotesCard({ projectId, value }: { projectId: string; value: string }) {

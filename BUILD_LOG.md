@@ -149,3 +149,39 @@ clean (only the known pdfmake chunk-size warning).
 
 **Next:** M4 — Estimate → Quote → Invoice conversion, invoice fields/paid status, deposits /
 change orders where scoped, and receipt/change-order/invoice PDFs.
+
+---
+
+## M4 — Document lifecycle + invoice basics ✅
+
+- **Document lifecycle fields:** extended `Estimate` as the v2 Document record with
+  `DocumentStatus`, `sourceDocumentId`, invoice issue/due dates, invoice number, terms,
+  amount due, paid status, payment method, and paid date.
+- **No-retyping conversion:** added `features/documents/documentLifecycle.ts`. Saved documents
+  now convert Estimate → Quote → Invoice from the preview screen, carrying rooms/line items,
+  rate snapshots, totals, scope notes, and materials mode context without re-entry.
+  Converted documents are linked via `sourceDocumentId`; quotes get a +30 day expiration,
+  invoices get auto-numbered `PK-0001` style numbers plus default "Due on receipt" / cash
+  payment fields. Creating a quote promotes lead/estimating jobs to `bid_sent`.
+- **Chain visible on jobs:** job detail now labels converted documents (for example,
+  "Converted from QUOTE v2") in Internal view while Client view keeps scope summaries.
+- **Invoice controls:** invoice previews expose editable invoice number, issue date, due date,
+  amount due, paid status, payment method, and terms. Marking paid stamps `paidDate`, zeroes
+  amount due, and moves the document status to `paid`.
+- **Invoice PDF:** saved invoice PDFs now show invoice number, issue/due/terms, payment method,
+  amount due, and a PAID mark when `paidStatus === 'paid'`. Quote/invoice PDFs remain
+  scope-only for line items.
+- **Tests:** added pure lifecycle tests for conversion order and invoice-number sequencing.
+
+**Verify:** `npm test` **44/44 green**, `npm run build` clean (only the known pdfmake
+chunk-size warning).
+
+**Known gaps (deferred):**
+- Deposits/change orders/receipt-specific PDFs are not implemented yet; v2 names them in
+  the milestone handoff but the spec does not define fields, statuses, or money rules.
+- JSON backup still does not include `rateEntries` / `properties`.
+- Document status filtering in the Jobs list is still project-status based; richer document
+  status filters can land with the next organizer polish pass.
+
+**Next:** M4 follow-up or M5 — define deposits/change-order data model if wanted, then move
+into client/property screens, local photos, dashboard, mobile nav, and dark theme.

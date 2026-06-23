@@ -36,10 +36,10 @@ Another agent session may be building v2 too. Before you commit:
   - **M3** — non-blocking guardrail/warning set (§5 + §15.E bullets) + Internal/Client
     view toggle (§6). Quote expiration is now persisted; saved quote/invoice PDFs print
     client scope + amounts only.
-- **Next: M4** — Estimate → Quote → Invoice conversion without retyping, invoice fields,
-  paid status, due dates/terms, deposits/change orders where scoped, and invoice/receipt/
-  change-order PDFs. Then M5 (client/property screens, local photos, dashboard, mobile nav,
-  dark theme).
+  - **M4** — Estimate → Quote → Invoice conversion without retyping, invoice metadata,
+    paid status, due dates/terms, linked source documents, and invoice PDF basics.
+- **Next:** define deposits/change-order fields if the user wants that sub-scope now, or move
+  into M5 (client/property screens, local photos, dashboard, mobile nav, dark theme).
 
 ## Authoritative docs (read in this order)
 
@@ -82,7 +82,7 @@ genuine ambiguity to the user rather than guessing.
 ## How to run / test
 
 ```bash
-npm test                 # vitest — expect 41/41 green (incl. the locked Bozena test)
+npm test                 # vitest — expect 44/44 green (incl. the locked Bozena test)
 npm run build            # tsc --noEmit && vite build — must pass (pdfmake chunk-size
                          # warning is known + non-blocking)
 npm run dev -- --host    # LAN dev server; open the printed Network: URL on an iPhone
@@ -103,6 +103,15 @@ quote → iOS share sheet → AirPrint; the PDF prints scope language only (no h
   `validUntil`. The existing estimate preview + `estimatePdf` were made calc-mode-aware and
   scope-only for saved quote/invoice PDFs, so saved quotes display/print correctly in ONE
   flow — don't fork a parallel preview.
+- Lifecycle conversion lives in `src/features/documents/documentLifecycle.ts`: preview actions
+  convert Estimate → Quote → Invoice, copy line items/rate snapshots/totals, append the new
+  document to the job, link via `sourceDocumentId`, generate `PK-0001` invoice numbers, and
+  promote new quotes to `bid_sent` when appropriate.
+- Invoice metadata is stored directly on `Estimate` (`invoiceNumber`, `issueDate`, `dueDate`,
+  `terms`, `amountDue`, `paidStatus`, `paymentMethod`, `paidDate`). The invoice preview panel
+  edits those fields through `estimateRepo.update`; the invoice PDF shows amount due and PAID.
+- Deposits/change orders/receipt-specific PDFs remain undefined and unbuilt. Do not invent
+  money rules without confirming the desired fields and workflow.
 - Guardrails live in `src/lib/estimate/guardrails.ts` and are pure/tested. Thresholds live in
   `Rates` (`hardFloorHourlyCents`, `targetHourlyCents`, `ceilingSqftFloorCents`,
   `windowStandaloneMinimumCents`, `jobMinimumCents`) and are editable in Settings.

@@ -5,13 +5,17 @@ import {
   Card,
   ConfirmDialog,
   EmptyState,
+  Field,
+  Input,
   PageHeader,
+  Select,
 } from '../../components/ui';
 import { DownloadIcon, PencilIcon, PrinterIcon, TrashIcon } from '../../components/icons';
 import { TotalsPanel } from './TotalsPanel';
 import { useClient, useEstimate, useProject, useRates } from '../../data/hooks';
 import { estimateRepo, projectRepo } from '../../data/repositories';
 import { useUI } from '../../store/ui';
+import { nowIso } from '../../lib/ids';
 import { computePainting } from '../../lib/estimate/painting';
 import { computeGeneral } from '../../lib/estimate/general';
 import { computeDocumentEstimate, lineItemAmount } from '../../lib/estimate/lineItems';
@@ -19,11 +23,18 @@ import { evaluateGuardrails } from '../../lib/estimate/guardrails';
 import { calcModeMeta } from '../documents/documentLine';
 import { GuardrailPanel } from '../documents/GuardrailPanel';
 import { DocumentViewToggle, type DocumentViewMode } from '../documents/DocumentViewToggle';
+import {
+  conversionLabel,
+  convertDocument,
+  docTypeLabel,
+  nextDocType,
+} from '../documents/documentLifecycle';
 import { buildEstimateDocDefinition } from '../pdf/estimatePdf';
 import { downloadEstimatePdf, printEstimatePdf } from '../pdf/pdfClient';
-import { formatMoney } from '../../lib/money';
+import { centsToDollars, dollarsToCents, formatMoney } from '../../lib/money';
 import { formatDate } from '../../lib/format';
 import { LINE_UNITS } from '../general/lineItem';
+import type { Estimate, PaidStatus, PaymentMethod } from '../../lib/types';
 
 export function EstimatePreviewPage() {
   const { estimateId } = useParams();
@@ -35,6 +46,7 @@ export function EstimatePreviewPage() {
   const rates = useRates();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [convertBusy, setConvertBusy] = useState(false);
   const [viewMode, setViewMode] = useState<DocumentViewMode>('internal');
 
   const painting = useMemo(
@@ -122,6 +134,23 @@ export function EstimatePreviewPage() {
     navigate(`/jobs/${estimate!.projectId}`);
   }
 
+  async function handleConvert() {
+    const target = nextDocType(estimate!.docType);
+    if (!target) return;
+    setConvertBusy(true);
+    try {
+      const converted = await convertDocument(estimate!, target);
+      toast(`${docTypeLabel(target)} created`);
+      navigate(`/estimate/${converted.id}`);
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Could not convert the document.', 'error');
+    } finally {
+      setConvertBusy(false);
+    }
+  }
+
+  const targetDocType = nextDocType(estimate.docType);
+
   return (
     <div>
       <PageHeader
@@ -160,6 +189,16 @@ export function EstimatePreviewPage() {
           </Button>
         </div>
         <div className="grid grid-cols-2 gap-2">
+          {targetDocType && (
+            <Button
+              variant="secondary"
+              onClick={handleConvert}
+              disabled={convertBusy}
+              className="col-span-2"
+            >
+              {convertBusy ? 'Converting...' : conversionLabel(targetDocType)}
+            </Button>
+          )}
           <Button
             variant="secondary"
             leftIcon={<PencilIcon size={18} />}
@@ -182,6 +221,10 @@ export function EstimatePreviewPage() {
         <div className="mb-5">
           <GuardrailPanel warnings={guardrails} />
         </div>
+      )}
+
+      {estimate.docType === 'invoice' && (
+        <InvoiceMetaPanel estimate={estimate} />
       )}
 
       <div className="mb-5">
@@ -309,4 +352,127 @@ export function EstimatePreviewPage() {
       />
     </div>
   );
+}
+
+function InvoiceMetaPanel({ estimate }: { estimate: Estimate }) {
+  const toast = useUI((s) => s.toast);
+  const amountDue = estimate.amountDue ?? estimate.totals.total;
+
+  async function patch(patch: Partial<Estimate>, message = 'Invoice updated') {
+    await estimateRepo.update(estimate.id, patch);
+    toast(message);
+  }
+
+  async function updatePaidStatus(paidStatus: PaidStatus) {
+    const paid = paidStatus === 'paid';
+    await patch(
+      {
+        paidStatus,
+        paidDate: paid ? estimate.paidDate ?? nowIso() : undefined,
+        amountDue: paid ? 0 : amountDue || estimate.totals.total,
+        status: paid ? 'paid' : 'invoiced',
+      },
+      paid ? 'Invoice marked paid' : 'Invoice updated',
+    );
+  }
+
+  return (
+    <Card className="mb-5 space-y-3 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          Invoice
+        </h2>
+        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium capitalize text-slate-600">
+          {estimate.paidStatus ?? 'unpaid'}
+        </span>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Field label="Invoice #">
+          <Input
+            defaultValue={estimate.invoiceNumber ?? ''}
+            onBlur={(e) => patch({ invoiceNumber: e.currentTarget.value.trim() || undefined })}
+          />
+        </Field>
+        <Field label="Issue date">
+          <Input
+            type="date"
+            value={dateInputFromIso(estimate.issueDate ?? estimate.createdAt)}
+            onChange={(e) => patch({ issueDate: dateInputToIso(e.currentTarget.value) })}
+          />
+        </Field>
+        <Field label="Due date">
+          <Input
+            type="date"
+            value={dateInputFromIso(estimate.dueDate)}
+            onChange={(e) => patch({ dueDate: dateInputToIso(e.currentTarget.value) })}
+          />
+        </Field>
+        <Field label="Amount due">
+          <MoneyInput
+            cents={amountDue}
+            onChange={(cents) => patch({ amountDue: cents })}
+          />
+        </Field>
+        <Field label="Paid status">
+          <Select
+            value={estimate.paidStatus ?? 'unpaid'}
+            onChange={(e) => updatePaidStatus(e.currentTarget.value as PaidStatus)}
+          >
+            <option value="unpaid">Unpaid</option>
+            <option value="partial">Partial</option>
+            <option value="paid">Paid</option>
+          </Select>
+        </Field>
+        <Field label="Payment method">
+          <Select
+            value={estimate.paymentMethod ?? 'cash'}
+            onChange={(e) => patch({ paymentMethod: e.currentTarget.value as PaymentMethod })}
+          >
+            <option value="cash">Cash</option>
+            <option value="check">Check</option>
+            <option value="card">Card</option>
+            <option value="zelle">Zelle</option>
+            <option value="venmo">Venmo</option>
+            <option value="other">Other</option>
+          </Select>
+        </Field>
+      </div>
+      <Field label="Terms">
+        <Input
+          defaultValue={estimate.terms ?? 'Due on receipt'}
+          onBlur={(e) => patch({ terms: e.currentTarget.value.trim() || undefined })}
+        />
+      </Field>
+      {estimate.paidDate && (
+        <p className="text-xs text-slate-500">Paid {formatDate(estimate.paidDate)}</p>
+      )}
+    </Card>
+  );
+}
+
+function MoneyInput({ cents, onChange }: { cents: number; onChange: (cents: number) => void }) {
+  return (
+    <div className="relative">
+      <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+        $
+      </span>
+      <Input
+        type="number"
+        inputMode="decimal"
+        min="0"
+        step="0.01"
+        value={centsToDollars(cents)}
+        onChange={(e) => onChange(dollarsToCents(Number.parseFloat(e.currentTarget.value) || 0))}
+        className="pl-6"
+      />
+    </div>
+  );
+}
+
+function dateInputFromIso(iso?: string): string {
+  return iso ? iso.slice(0, 10) : '';
+}
+
+function dateInputToIso(value: string): string | undefined {
+  return value ? new Date(`${value}T12:00:00`).toISOString() : undefined;
 }

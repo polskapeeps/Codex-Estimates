@@ -2,6 +2,7 @@ import { estimateRepo, projectRepo } from '../../data/repositories';
 import type { ProjectPatch } from '../../data/repositories';
 import type {
   DocType,
+  DocumentStatus,
   LineItem,
   MaterialsMode,
   PricingMode,
@@ -29,7 +30,7 @@ export interface SaveEstimateDraft {
   totals: Totals;
   validUntil?: string;
   dueDate?: string;
-  status: 'draft' | 'final';
+  status: DocumentStatus;
 }
 
 export interface SaveResult {
