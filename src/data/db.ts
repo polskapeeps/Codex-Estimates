@@ -5,6 +5,8 @@ import type {
   Estimate,
   LibraryItem,
   Project,
+  Property,
+  RateEntry,
   Rates,
 } from '../lib/types';
 
@@ -26,6 +28,9 @@ export class EstimatorDB extends Dexie {
   libraryItems!: Table<LibraryItem, string>;
   attachments!: Table<Attachment, string>;
   rates!: Table<RatesRow, string>;
+  // v2 additions
+  rateEntries!: Table<RateEntry, string>; // editable Rate Book (§3)
+  properties!: Table<Property, string>; // saved job sites (§15.A)
 
   constructor() {
     super('estimator');
@@ -36,6 +41,12 @@ export class EstimatorDB extends Dexie {
       libraryItems: 'id, category, description',
       attachments: 'id, projectId',
       rates: 'id',
+    });
+    // v2: additive upgrade — new tables only, existing stores untouched so
+    // v1 data migrates cleanly. Seeding happens at boot via the repos.
+    this.version(2).stores({
+      rateEntries: 'id, category, sortOrder',
+      properties: 'id, clientId, updatedAt',
     });
   }
 }

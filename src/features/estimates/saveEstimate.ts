@@ -1,6 +1,15 @@
 import { estimateRepo, projectRepo } from '../../data/repositories';
 import type { ProjectPatch } from '../../data/repositories';
-import type { LineItem, PricingMode, Rates, Room, Totals, Trade } from '../../lib/types';
+import type {
+  DocType,
+  LineItem,
+  MaterialsMode,
+  PricingMode,
+  Rates,
+  Room,
+  Totals,
+  Trade,
+} from '../../lib/types';
 
 export interface SaveEstimateDraft {
   estimateId?: string; // present => update this estimate
@@ -9,6 +18,10 @@ export interface SaveEstimateDraft {
   title: string;
   trade: Trade;
   pricingMode: PricingMode;
+  /** Document lifecycle type (v2 §7). Defaults to 'estimate' when omitted. */
+  docType?: DocType;
+  /** Materials in totals vs billed separately (v2 §8); stored on the project. */
+  materialsMode?: MaterialsMode;
   rooms: Room[];
   lineItems: LineItem[];
   scopeNotes: string;
@@ -31,6 +44,7 @@ export async function saveEstimate(draft: SaveEstimateDraft): Promise<SaveResult
   const estimateFields = {
     trade: draft.trade,
     pricingMode: draft.pricingMode,
+    docType: draft.docType,
     rooms: draft.rooms,
     lineItems: draft.lineItems,
     ratesSnapshot: draft.ratesSnapshot,
@@ -42,10 +56,9 @@ export async function saveEstimate(draft: SaveEstimateDraft): Promise<SaveResult
   // Edit an existing estimate in place.
   if (draft.estimateId) {
     const updated = await estimateRepo.update(draft.estimateId, estimateFields);
-    await projectRepo.update(updated.projectId, {
-      title: draft.title,
-      trade: draft.trade,
-    });
+    const projectPatch: ProjectPatch = { title: draft.title, trade: draft.trade };
+    if (draft.materialsMode) projectPatch.materialsMode = draft.materialsMode;
+    await projectRepo.update(updated.projectId, projectPatch);
     return { projectId: updated.projectId, estimateId: updated.id };
   }
 
@@ -57,6 +70,7 @@ export async function saveEstimate(draft: SaveEstimateDraft): Promise<SaveResult
       title: draft.title,
       trade: draft.trade,
       status: 'estimating',
+      materialsMode: draft.materialsMode,
     });
     projectId = project.id;
   }

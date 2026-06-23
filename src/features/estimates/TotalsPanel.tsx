@@ -82,6 +82,9 @@ export function TotalsPanel({
               )}
               <Row label="Subtotal" value={formatMoney(totals.subtotal)} muted />
               <Row label="Markup" value={formatMoney(totals.markup)} />
+              {totals.discounts !== 0 && (
+                <Row label="Credit applied" value={`(${formatMoney(Math.abs(totals.discounts))})`} />
+              )}
               <Row label="Tax" value={formatMoney(totals.tax)} />
               <div className="mt-1 flex items-center justify-between border-t border-slate-100 pt-2">
                 <dt className="font-semibold text-slate-900">Total</dt>

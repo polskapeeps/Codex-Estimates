@@ -1,6 +1,7 @@
 import type { Content, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { computePainting } from '../../lib/estimate/painting';
-import { computeGeneral, lineTotal } from '../../lib/estimate/general';
+import { computeGeneral } from '../../lib/estimate/general';
+import { lineItemAmount } from '../../lib/estimate/lineItems';
 import { LINE_UNITS } from '../general/lineItem';
 import { formatMoney, formatMoneyWhole } from '../../lib/money';
 import { formatDate } from '../../lib/format';
@@ -167,11 +168,11 @@ function generalBreakdown(ctx: EstimatePdfContext): Content[] {
   ];
   for (const item of comp.lineItems) {
     body.push([
-      { text: item.description || 'Untitled' },
+      { text: item.clientDescription?.trim() || item.description || 'Untitled' },
       { text: String(item.qty), alignment: 'right' },
       { text: unitLabel(item.unit) },
       { text: formatMoney(item.unitCost), alignment: 'right' },
-      { text: formatMoney(lineTotal(item)), alignment: 'right' },
+      { text: formatMoney(lineItemAmount(item)), alignment: 'right' },
     ]);
   }
   return [

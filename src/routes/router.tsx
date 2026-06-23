@@ -8,6 +8,7 @@ import { ClientDetailPage } from '../features/clients/ClientDetailPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { EstimateEditorPage } from '../features/estimates/EstimateEditorPage';
 import { EstimatePreviewPage } from '../features/estimates/EstimatePreviewPage';
+import { DocumentBuilderPage } from '../features/documents/DocumentBuilderPage';
 import { LibraryPage } from '../features/general/LibraryPage';
 import { NotFoundPage } from '../features/NotFoundPage';
 
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
       { path: 'jobs/:projectId', element: <JobDetailPage /> },
       { path: 'clients', element: <ClientsPage /> },
       { path: 'clients/:clientId', element: <ClientDetailPage /> },
+      { path: 'quote/new', element: <DocumentBuilderPage /> },
       { path: 'estimate/new', element: <EstimateEditorPage /> },
       { path: 'estimate/:estimateId', element: <EstimatePreviewPage /> },
       { path: 'estimate/:estimateId/edit', element: <EstimateEditorPage /> },

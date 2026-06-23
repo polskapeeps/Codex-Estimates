@@ -61,15 +61,25 @@ export function HomePage() {
         <StatCard label="Won / mo" value={formatMoneyWhole(stats.wonThisMonth)} />
       </div>
 
-      <Button
-        fullWidth
-        size="lg"
-        leftIcon={<PlusIcon size={20} />}
-        onClick={() => navigate('/estimate/new')}
-        className="mb-6"
-      >
-        New Estimate
-      </Button>
+      <div className="mb-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        <Button
+          fullWidth
+          size="lg"
+          leftIcon={<PlusIcon size={20} />}
+          onClick={() => navigate('/quote/new')}
+        >
+          New Quote
+        </Button>
+        <Button
+          fullWidth
+          size="lg"
+          variant="secondary"
+          leftIcon={<PlusIcon size={20} />}
+          onClick={() => navigate('/estimate/new')}
+        >
+          Painting Estimate
+        </Button>
+      </div>
 
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Recent jobs</h2>

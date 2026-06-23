@@ -5,9 +5,19 @@ import { projectRepo } from './projectRepo';
 import { estimateRepo } from './estimateRepo';
 import { libraryRepo } from './libraryRepo';
 import { ratesRepo } from './ratesRepo';
+import { rateBookRepo } from './rateBookRepo';
+import { propertyRepo } from './propertyRepo';
 import type { Repositories } from './interfaces';
 
-export { clientRepo, projectRepo, estimateRepo, libraryRepo, ratesRepo };
+export {
+  clientRepo,
+  projectRepo,
+  estimateRepo,
+  libraryRepo,
+  ratesRepo,
+  rateBookRepo,
+  propertyRepo,
+};
 export { exportAll, importAll, BACKUP_SCHEMA_VERSION } from './backup';
 export * from './interfaces';
 
@@ -18,4 +28,6 @@ export const repositories: Repositories = {
   estimates: estimateRepo,
   library: libraryRepo,
   rates: ratesRepo,
+  rateBook: rateBookRepo,
+  properties: propertyRepo,
 };

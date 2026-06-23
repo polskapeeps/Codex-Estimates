@@ -13,7 +13,9 @@ import { useClient, useEstimate, useProject, useRates } from '../../data/hooks';
 import { estimateRepo, projectRepo } from '../../data/repositories';
 import { useUI } from '../../store/ui';
 import { computePainting } from '../../lib/estimate/painting';
-import { computeGeneral, lineTotal } from '../../lib/estimate/general';
+import { computeGeneral } from '../../lib/estimate/general';
+import { lineItemAmount } from '../../lib/estimate/lineItems';
+import { calcModeMeta } from '../documents/documentLine';
 import { buildEstimateDocDefinition } from '../pdf/estimatePdf';
 import { downloadEstimatePdf, printEstimatePdf } from '../pdf/pdfClient';
 import { formatMoney } from '../../lib/money';
@@ -205,22 +207,33 @@ export function EstimatePreviewPage() {
           {general.lineItems.length === 0 ? (
             <p className="px-4 py-3 text-sm text-slate-400">No line items.</p>
           ) : (
-            general.lineItems.map((item) => (
-              <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-slate-800">
-                    {item.description || 'Untitled'}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {item.qty} {LINE_UNITS.find((u) => u.value === item.unit)?.label ?? item.unit} ×{' '}
-                    {formatMoney(item.unitCost)}
-                  </p>
+            general.lineItems.map((item) => {
+              const isCredit = item.calcMode === 'credit';
+              return (
+                <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-slate-800">
+                      {item.clientDescription?.trim() || item.description || 'Untitled'}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {item.calcMode
+                        ? calcModeMeta(item.calcMode).label
+                        : `${item.qty} ${
+                            LINE_UNITS.find((u) => u.value === item.unit)?.label ?? item.unit
+                          } × ${formatMoney(item.unitCost)}`}
+                    </p>
+                  </div>
+                  <span
+                    className={
+                      'shrink-0 text-sm font-semibold ' +
+                      (isCredit ? 'text-green-700' : 'text-slate-900')
+                    }
+                  >
+                    {formatMoney(lineItemAmount(item))}
+                  </span>
                 </div>
-                <span className="shrink-0 text-sm font-semibold text-slate-900">
-                  {formatMoney(lineTotal(item))}
-                </span>
-              </div>
-            ))
+              );
+            })
           )}
         </Card>
       )}

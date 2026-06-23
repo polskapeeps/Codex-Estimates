@@ -7,6 +7,8 @@ import type {
   LibraryItem,
   Project,
   ProjectStatus,
+  Property,
+  RateEntry,
   Rates,
 } from '../../lib/types';
 
@@ -29,6 +31,12 @@ export type EstimatePatch = Partial<Omit<Estimate, 'id' | 'projectId' | 'created
 
 export type LibraryItemInput = Omit<LibraryItem, 'id'>;
 export type LibraryItemPatch = Partial<Omit<LibraryItem, 'id'>>;
+
+export type RateEntryInput = Omit<RateEntry, 'id'> & Partial<Pick<RateEntry, 'id'>>;
+export type RateEntryPatch = Partial<Omit<RateEntry, 'id'>>;
+
+export type PropertyInput = Omit<Property, 'id' | 'createdAt' | 'updatedAt'>;
+export type PropertyPatch = Partial<Omit<Property, 'id' | 'clientId' | 'createdAt'>>;
 
 export interface ClientRepository {
   getAll(): Promise<Client[]>;
@@ -76,10 +84,33 @@ export interface RatesRepository {
   reset(): Promise<Rates>;
 }
 
+export interface RateBookRepository {
+  getAll(): Promise<RateEntry[]>;
+  byCategory(category: RateEntry['category']): Promise<RateEntry[]>;
+  /** Seed any missing default entries (call once at app boot). Never clobbers edits. */
+  ensureSeeded(): Promise<void>;
+  create(input: RateEntryInput): Promise<RateEntry>;
+  update(id: string, patch: RateEntryPatch): Promise<RateEntry>;
+  remove(id: string): Promise<void>;
+  /** Restore the full default Rate Book (used by Settings reset). */
+  resetToDefaults(): Promise<void>;
+}
+
+export interface PropertyRepository {
+  getAll(): Promise<Property[]>;
+  get(id: string): Promise<Property | undefined>;
+  byClient(clientId: string): Promise<Property[]>;
+  create(input: PropertyInput): Promise<Property>;
+  update(id: string, patch: PropertyPatch): Promise<Property>;
+  remove(id: string): Promise<void>;
+}
+
 export interface Repositories {
   clients: ClientRepository;
   projects: ProjectRepository;
   estimates: EstimateRepository;
   library: LibraryRepository;
   rates: RatesRepository;
+  rateBook: RateBookRepository;
+  properties: PropertyRepository;
 }

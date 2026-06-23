@@ -7,6 +7,8 @@ import {
   estimateRepo,
   libraryRepo,
   projectRepo,
+  propertyRepo,
+  rateBookRepo,
   ratesRepo,
 } from './repositories';
 import type {
@@ -14,6 +16,9 @@ import type {
   Estimate,
   LibraryItem,
   Project,
+  Property,
+  RateCategory,
+  RateEntry,
   Rates,
 } from '../lib/types';
 
@@ -57,4 +62,27 @@ export function useLibraryItems(): LibraryItem[] | undefined {
 
 export function useRates(): Rates | undefined {
   return useLiveQuery(() => ratesRepo.get(), []);
+}
+
+export function useRateBook(): RateEntry[] | undefined {
+  return useLiveQuery(() => rateBookRepo.getAll(), []);
+}
+
+export function useRateBookByCategory(
+  category: RateCategory | undefined,
+): RateEntry[] | undefined {
+  return useLiveQuery(
+    () => (category ? rateBookRepo.byCategory(category) : []),
+    [category],
+  );
+}
+
+export function usePropertiesByClient(
+  clientId: string | undefined,
+): Property[] | undefined {
+  return useLiveQuery(() => (clientId ? propertyRepo.byClient(clientId) : []), [clientId]);
+}
+
+export function useProperty(id: string | undefined): Property | undefined {
+  return useLiveQuery(() => (id ? propertyRepo.get(id) : undefined), [id]);
 }
