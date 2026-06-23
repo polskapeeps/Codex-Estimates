@@ -1,5 +1,5 @@
 import { addDays } from 'date-fns';
-import { estimateRepo, projectRepo } from '../../data/repositories';
+import { clientRepo, estimateRepo, projectRepo } from '../../data/repositories';
 import { nowIso } from '../../lib/ids';
 import type { DocType, DocumentStatus, Estimate } from '../../lib/types';
 
@@ -39,6 +39,8 @@ export async function convertDocument(source: Estimate, target: DocType): Promis
   if (!project) throw new Error('Parent job not found.');
 
   const now = nowIso();
+  const client =
+    target === 'invoice' ? await clientRepo.get(project.clientId) : undefined;
   const invoiceFields =
     target === 'invoice'
       ? {
@@ -48,7 +50,8 @@ export async function convertDocument(source: Estimate, target: DocType): Promis
           terms: 'Due on receipt',
           amountDue: source.totals.total,
           paidStatus: 'unpaid' as const,
-          paymentMethod: 'cash' as const,
+          // Default to the client's preferred method (v2 §7/§10), else cash.
+          paymentMethod: client?.preferredPaymentMethod ?? ('cash' as const),
         }
       : {};
 

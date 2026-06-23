@@ -185,3 +185,58 @@ chunk-size warning).
 
 **Next:** M4 follow-up or M5 — define deposits/change-order data model if wanted, then move
 into client/property screens, local photos, dashboard, mobile nav, and dark theme.
+
+---
+
+## M5 — Organizer polish + deploy-readiness (Claude pickup) ✅
+
+Picked up from M4 by a Claude session. Goal set by the user: get the app coherent,
+data-safe, and ready to push to live hosting (no visual redesign this pass — a separate
+"Claude design" pass will scope the look; this kept the existing UI kit). Cloud sync stays
+explicitly deferred. Tackled the standing correctness/coherence gaps + the headline M5
+organizer screens.
+
+- **JSON backup is no longer lossy (correctness fix).** `BackupPayload` now carries
+  `rateEntries` + `properties`; `exportAll`/`importAll` round-trip them; schema bumped to
+  **2**. Older (v1) backups omit those arrays and import fine (`?? []`); the Rate Book
+  re-seeds its defaults at the post-import reload via `rateBookRepo.ensureSeeded`. Settings
+  import warning copy updated. Tests stay pure (vitest runs in `node`, no Dexie), so this is
+  covered by typecheck + reasoning, not a new unit test.
+- **Nav + branding now lead with the v2 flow (§11 / Decision #4).** The shell's primary "+"
+  (desktop button + mobile FAB) and the Home empty-state CTA now open the Rate-Book quote
+  builder `/quote/new` ("New Quote") instead of the v1 painting flow. Painting estimate is
+  still reachable from Home's secondary button. Wordmark/app name set to **"PK Estimator"**
+  across `AppShell`, `HomePage`, `index.html` (title + apple-mobile-web-app-title), and the
+  PWA manifest (`vite.config.ts`).
+- **Properties UI (M5 headline, §15.A).** New `features/properties/PropertyForm.tsx` (modal
+  CRUD: label, address, measurements, access notes, ladder/height notes, notes). Client
+  detail page gained a **Properties** section (list + add/edit/delete, with a delete-confirm).
+  `ProjectForm` can link a job to one of the selected client's saved sites (dropdown +
+  inline "New property"); changing the client resets the property. Job detail renders the
+  linked property's address + measurements/access/ladder notes. New `MapPinIcon`. Deleting a
+  client now also removes its saved properties so no rows are orphaned.
+- **Client tags + preferred payment (§10).** `Client` gained optional `tags[]` +
+  `preferredPaymentMethod`. `ClientForm` edits both (comma-separated tags + a payment select);
+  client detail shows tag chips + preferred method. Invoice conversion
+  (`documentLifecycle.convertDocument`) now defaults `paymentMethod` to the client's
+  preference (falls back to cash).
+- **Dashboard outstanding vs. collected (Phase C start).** Home stat cards now read
+  **Outstanding** (Σ amount due on unpaid/partial invoices), **Collected** (Σ totals of
+  invoices marked paid this month, by `paidDate`), and **Active bids** (count). Built purely
+  from existing lifecycle/invoice data — no new entities.
+
+**Verify:** `npm test` **44/44 green** (Bozena still $1,977.89), `npx tsc --noEmit` clean,
+`npm run build` clean (only the known pdfmake chunk-size warning).
+
+**Known gaps (deferred):**
+- Deposits / change orders / receipt PDFs still undefined — needs the user to confirm fields
+  + money rules before building (unchanged from M4).
+- Local photos (v1 `Attachment` blob type exists, no UI) and cloud sync are still not built.
+- Property `measurements` are freeform text; structured per-room measurements are a later pass.
+- Client `tags` are informational + drive the invoice payment default; they do NOT yet
+  auto-suggest a `repeat_client` credit reason in the quote builder (possible future tie-in).
+- Document-status filtering in the Jobs list is still project-status based.
+
+**Next:** local photos (Dexie blobs, no cloud), or a deposits/change-order data model once the
+user defines it, or the "Claude design" UI pass. Cloud sync (Supabase, §9) remains the big
+separate follow-up.

@@ -23,17 +23,22 @@ export function HomePage() {
   const stats = useMemo(() => {
     const list = projects ?? [];
     const active = list.filter((p) => ACTIVE_STATUSES.includes(p.status)).length;
-    const awaiting = list.filter((p) => p.status === 'bid_sent').length;
     const now = new Date();
-    let wonThisMonth = 0;
-    for (const row of rows) {
-      const p = row.project;
-      if (p.status === 'won' && p.decisionAt && isSameMonth(parseISO(p.decisionAt), now)) {
-        wonThisMonth += row.expected ?? 0;
+    let outstanding = 0;
+    let collectedThisMonth = 0;
+    for (const est of estimates ?? []) {
+      if (est.docType !== 'invoice') continue;
+      if (est.paidStatus === 'paid') {
+        if (est.paidDate && isSameMonth(parseISO(est.paidDate), now)) {
+          collectedThisMonth += est.totals.total;
+        }
+      } else {
+        // unpaid + partial: what's still owed (falls back to the full total)
+        outstanding += est.amountDue ?? est.totals.total;
       }
     }
-    return { active, awaiting, wonThisMonth };
-  }, [projects, rows]);
+    return { active, outstanding, collectedThisMonth };
+  }, [projects, estimates]);
 
   const recent = useMemo(
     () =>
@@ -50,15 +55,15 @@ export function HomePage() {
     <div>
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Estimator</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">PK Estimator</h1>
           <p className="text-sm text-slate-500">Your jobs at a glance</p>
         </div>
       </div>
 
       <div className="mb-5 grid grid-cols-3 gap-2.5">
-        <StatCard label="Active bids" value={String(stats.active)} />
-        <StatCard label="Awaiting" value={String(stats.awaiting)} hint="bid sent" />
-        <StatCard label="Won / mo" value={formatMoneyWhole(stats.wonThisMonth)} />
+        <StatCard label="Outstanding" value={formatMoneyWhole(stats.outstanding)} hint="unpaid invoices" />
+        <StatCard label="Collected" value={formatMoneyWhole(stats.collectedThisMonth)} hint="this month" />
+        <StatCard label="Active bids" value={String(stats.active)} hint="in progress" />
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -94,10 +99,10 @@ export function HomePage() {
         <EmptyState
           icon={<JobsIcon size={40} />}
           title="No jobs yet"
-          message="Start your first estimate and it'll show up here."
+          message="Start your first quote and it'll show up here."
           action={
-            <Button leftIcon={<PlusIcon size={18} />} onClick={() => navigate('/estimate/new')}>
-              New Estimate
+            <Button leftIcon={<PlusIcon size={18} />} onClick={() => navigate('/quote/new')}>
+              New Quote
             </Button>
           }
         />

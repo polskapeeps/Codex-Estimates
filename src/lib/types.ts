@@ -65,6 +65,11 @@ export interface Client {
   email?: string;
   address?: string;
   notes?: string;
+  /** Client tags (v2 §10), e.g. "repeat", "has_connections". Drives credit-reason
+   *  + payment defaults. Optional so older saved clients keep working. */
+  tags?: string[];
+  /** Default payment method suggested when invoicing this client (v2 §7/§10). */
+  preferredPaymentMethod?: PaymentMethod;
   createdAt: string;
   updatedAt: string;
 }
@@ -301,4 +306,8 @@ export interface BackupPayload {
   estimates: Estimate[];
   libraryItems: LibraryItem[];
   rates: Rates;
+  /** Editable Rate Book entries (v2 §3). Absent in schemaVersion 1 backups. */
+  rateEntries?: RateEntry[];
+  /** Saved job sites/properties (v2 §15.A). Absent in schemaVersion 1 backups. */
+  properties?: Property[];
 }

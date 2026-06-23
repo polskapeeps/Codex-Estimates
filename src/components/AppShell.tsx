@@ -30,7 +30,9 @@ const TABS: Tab[] = [
   { to: '/settings', label: 'Settings', Icon: SettingsIcon },
 ];
 
-const NEW_ESTIMATE = '/estimate/new';
+// v2 §11: the Rate Book quote builder is the primary "New Job" flow. The
+// painting estimate stays reachable from the Home screen's secondary action.
+const NEW_QUOTE = '/quote/new';
 
 function BrandMark() {
   return (
@@ -52,7 +54,9 @@ function BrandMark() {
           />
         </svg>
       </span>
-      <span className="text-lg font-bold tracking-tight text-slate-900">Estimator</span>
+      <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        PK Estimator
+      </span>
     </div>
   );
 }
@@ -76,8 +80,8 @@ export function AppShell() {
           <BrandMark />
         </div>
         <div className="mt-6 px-1">
-          <Button fullWidth leftIcon={<PlusIcon size={18} />} onClick={() => navigate(NEW_ESTIMATE)}>
-            New Estimate
+          <Button fullWidth leftIcon={<PlusIcon size={18} />} onClick={() => navigate(NEW_QUOTE)}>
+            New Quote
           </Button>
         </div>
         <nav className="mt-6 flex flex-col gap-1">
@@ -125,8 +129,8 @@ export function AppShell() {
           <div className="flex justify-center">
             <button
               type="button"
-              aria-label="New Estimate"
-              onClick={() => navigate(NEW_ESTIMATE)}
+              aria-label="New Quote"
+              onClick={() => navigate(NEW_QUOTE)}
               className="-mt-6 grid h-14 w-14 place-items-center rounded-full bg-brand-700 text-white shadow-lg shadow-brand-700/30 ring-4 ring-slate-50 transition-transform active:scale-95"
             >
               <PlusIcon size={26} />

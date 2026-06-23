@@ -397,7 +397,8 @@ export function SettingsPage() {
           </label>
         </div>
         <p className="text-xs text-slate-400">
-          Importing replaces all jobs, clients, estimates, and rates on this device.
+          Importing replaces all jobs, clients, estimates, properties, rate book, and rates on
+          this device.
         </p>
       </Section>
 

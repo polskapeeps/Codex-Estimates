@@ -11,6 +11,7 @@ import {
 import {
   ArchiveIcon,
   FileTextIcon,
+  MapPinIcon,
   PencilIcon,
   PlusIcon,
   TrashIcon,
@@ -18,7 +19,7 @@ import {
 import { StatusControl } from './StatusControl';
 import { ProjectForm } from './ProjectForm';
 import { DocumentViewToggle, type DocumentViewMode } from '../documents/DocumentViewToggle';
-import { useClient, useEstimatesByProject, useProject } from '../../data/hooks';
+import { useClient, useEstimatesByProject, useProject, useProperty } from '../../data/hooks';
 import { projectRepo } from '../../data/repositories';
 import { useUI } from '../../store/ui';
 import { computeDocumentEstimate } from '../../lib/estimate/lineItems';
@@ -33,6 +34,7 @@ export function JobDetailPage() {
   const toast = useUI((s) => s.toast);
   const project = useProject(projectId);
   const client = useClient(project?.clientId);
+  const property = useProperty(project?.propertyId);
   const estimates = useEstimatesByProject(projectId);
 
   const [editOpen, setEditOpen] = useState(false);
@@ -169,6 +171,37 @@ export function JobDetailPage() {
         )}
       </Card>
 
+      {/* Property / site */}
+      {property && (
+        <>
+          <SectionTitle>Property</SectionTitle>
+          <Card className="mb-5 px-4 py-3">
+            <div className="flex items-start gap-3">
+              <MapPinIcon size={18} className="mt-0.5 shrink-0 text-slate-400" />
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-slate-900">{property.label}</p>
+                {property.address && (
+                  <p className="text-sm text-slate-500">{property.address}</p>
+                )}
+              </div>
+            </div>
+            {(property.measurements || property.accessNotes || property.ladderNotes) && (
+              <dl className="mt-3 space-y-2 border-t border-slate-100 pt-3 text-sm">
+                {property.measurements && (
+                  <PropertyNote label="Measurements" value={property.measurements} />
+                )}
+                {property.accessNotes && (
+                  <PropertyNote label="Access" value={property.accessNotes} />
+                )}
+                {property.ladderNotes && (
+                  <PropertyNote label="Ladder / height" value={property.ladderNotes} />
+                )}
+              </dl>
+            )}
+          </Card>
+        </>
+      )}
+
       {/* Notes */}
       <SectionTitle>Notes</SectionTitle>
       <NotesCard projectId={project.id} value={project.notes} />
@@ -227,6 +260,15 @@ export function JobDetailPage() {
 function SectionTitle({ children }: { children: ReactNode }) {
   return (
     <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{children}</h2>
+  );
+}
+
+function PropertyNote({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</dt>
+      <dd className="mt-0.5 whitespace-pre-wrap text-slate-700">{value}</dd>
+    </div>
   );
 }
 

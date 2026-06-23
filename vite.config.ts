@@ -11,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'robots.txt', 'icons/apple-touch-icon.png'],
       manifest: {
-        name: 'Estimator',
-        short_name: 'Estimator',
-        description: 'Trades estimating + lead organizer. Painting & general line-item estimates, offline.',
+        name: 'PK Estimator',
+        short_name: 'PK Estimator',
+        description: 'Trades estimating + job organizer. Estimates, quotes, and invoices from a Rate Book, offline.',
         theme_color: '#1d4ed8',
         background_color: '#f8fafc',
         display: 'standalone',

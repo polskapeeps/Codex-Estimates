@@ -7,14 +7,21 @@ import {
   EmptyState,
   PageHeader,
 } from '../../components/ui';
-import { PencilIcon, PlusIcon, TrashIcon } from '../../components/icons';
+import { MapPinIcon, PencilIcon, PlusIcon, TrashIcon } from '../../components/icons';
 import { ClientForm } from './ClientForm';
 import { ProjectForm } from '../projects/ProjectForm';
+import { PropertyForm } from '../properties/PropertyForm';
 import { JobCard } from '../projects/JobCard';
 import { buildJobRows } from '../projects/jobsQuery';
-import { useAllEstimates, useClient, useProjectsByClient } from '../../data/hooks';
-import { clientRepo } from '../../data/repositories';
+import {
+  useAllEstimates,
+  useClient,
+  useProjectsByClient,
+  usePropertiesByClient,
+} from '../../data/hooks';
+import { clientRepo, propertyRepo } from '../../data/repositories';
 import { useUI } from '../../store/ui';
+import type { Property } from '../../lib/types';
 
 export function ClientDetailPage() {
   const { clientId } = useParams();
@@ -22,11 +29,15 @@ export function ClientDetailPage() {
   const toast = useUI((s) => s.toast);
   const client = useClient(clientId);
   const projects = useProjectsByClient(clientId);
+  const properties = usePropertiesByClient(clientId);
   const estimates = useAllEstimates();
 
   const [editOpen, setEditOpen] = useState(false);
   const [jobOpen, setJobOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [propertyFormOpen, setPropertyFormOpen] = useState(false);
+  const [editingProperty, setEditingProperty] = useState<Property | undefined>();
+  const [deleteProperty, setDeleteProperty] = useState<Property | undefined>();
 
   const rows = useMemo(
     () => buildJobRows(projects ?? [], client ? [client] : [], estimates ?? []),
@@ -45,16 +56,44 @@ export function ClientDetailPage() {
   const jobCount = projects?.length ?? 0;
 
   async function handleDelete() {
+    // Client delete is only enabled with no jobs, but it may still own saved
+    // properties — remove them too so we don't orphan rows in the DB / backup.
+    await Promise.all((properties ?? []).map((p) => propertyRepo.remove(p.id)));
     await clientRepo.remove(client!.id);
     toast('Client deleted');
     navigate('/clients');
   }
 
+  function openNewProperty() {
+    setEditingProperty(undefined);
+    setPropertyFormOpen(true);
+  }
+
+  function openEditProperty(property: Property) {
+    setEditingProperty(property);
+    setPropertyFormOpen(true);
+  }
+
+  async function handleDeleteProperty() {
+    if (!deleteProperty) return;
+    await propertyRepo.remove(deleteProperty.id);
+    toast('Property deleted');
+    setDeleteProperty(undefined);
+  }
+
+  const tags = client.tags ?? [];
   const details: { label: string; value?: string }[] = [
     { label: 'Company', value: client.company },
     { label: 'Phone', value: client.phone },
     { label: 'Email', value: client.email },
     { label: 'Address', value: client.address },
+    {
+      label: 'Preferred payment',
+      value: client.preferredPaymentMethod
+        ? client.preferredPaymentMethod.charAt(0).toUpperCase() +
+          client.preferredPaymentMethod.slice(1)
+        : undefined,
+    },
   ];
 
   return (
@@ -75,6 +114,19 @@ export function ClientDetailPage() {
         }
       />
 
+      {tags.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-1.5">
+          {tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+
       <Card className="mb-5 divide-y divide-slate-100">
         {details
           .filter((d) => d.value)
@@ -94,6 +146,59 @@ export function ClientDetailPage() {
           <div className="px-4 py-3 text-sm text-slate-400">No contact details yet.</div>
         )}
       </Card>
+
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Properties</h2>
+        <Button size="sm" variant="secondary" leftIcon={<PlusIcon size={16} />} onClick={openNewProperty}>
+          Add property
+        </Button>
+      </div>
+
+      {properties && properties.length > 0 ? (
+        <ul className="mb-5 space-y-2">
+          {properties.map((property) => {
+            const meta = [property.accessNotes, property.ladderNotes]
+              .filter(Boolean)
+              .join(' · ');
+            return (
+              <li key={property.id}>
+                <Card className="flex items-start gap-3 px-4 py-3">
+                  <MapPinIcon size={18} className="mt-0.5 shrink-0 text-slate-400" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-slate-900">{property.label}</p>
+                    {property.address && (
+                      <p className="truncate text-sm text-slate-500">{property.address}</p>
+                    )}
+                    {meta && <p className="mt-0.5 truncate text-xs text-slate-400">{meta}</p>}
+                  </div>
+                  <div className="flex shrink-0 gap-1">
+                    <button
+                      type="button"
+                      aria-label="Edit property"
+                      onClick={() => openEditProperty(property)}
+                      className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                    >
+                      <PencilIcon size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Delete property"
+                      onClick={() => setDeleteProperty(property)}
+                      className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
+                    >
+                      <TrashIcon size={16} />
+                    </button>
+                  </div>
+                </Card>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <Card className="mb-5 px-4 py-5 text-center text-sm text-slate-500">
+          No saved sites yet. Add one to reuse measurements + access notes on jobs.
+        </Card>
+      )}
 
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Jobs</h2>
@@ -135,6 +240,21 @@ export function ClientDetailPage() {
 
       <ClientForm open={editOpen} onClose={() => setEditOpen(false)} client={client} />
       <ProjectForm open={jobOpen} onClose={() => setJobOpen(false)} defaultClientId={client.id} />
+      <PropertyForm
+        open={propertyFormOpen}
+        onClose={() => setPropertyFormOpen(false)}
+        clientId={client.id}
+        property={editingProperty}
+      />
+      <ConfirmDialog
+        open={Boolean(deleteProperty)}
+        onClose={() => setDeleteProperty(undefined)}
+        onConfirm={handleDeleteProperty}
+        title="Delete this property?"
+        message="This removes the saved site and its notes. Jobs linked to it keep their own address. This cannot be undone."
+        confirmLabel="Delete"
+        danger
+      />
       <ConfirmDialog
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}

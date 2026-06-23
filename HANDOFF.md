@@ -1,6 +1,6 @@
 # Estimator Handoff
 
-Last updated: 2026-06-23
+Last updated: 2026-06-23 (M5 pickup by Claude)
 
 > **This file supersedes the old 2026-06-07 handoff** (which pointed at `master` /
 > the v1 Claude-spec build + dark mode and is now OUTDATED). Active work is the
@@ -38,8 +38,19 @@ Another agent session may be building v2 too. Before you commit:
     client scope + amounts only.
   - **M4** — Estimate → Quote → Invoice conversion without retyping, invoice metadata,
     paid status, due dates/terms, linked source documents, and invoice PDF basics.
-- **Next:** define deposits/change-order fields if the user wants that sub-scope now, or move
-  into M5 (client/property screens, local photos, dashboard, mobile nav, dark theme).
+  - **M5** (Claude pickup, 2026-06-23) — organizer polish + deploy-readiness:
+    **fixed the lossy JSON backup** (now round-trips `rateEntries` + `properties`, schema v2);
+    nav + branding now lead with the v2 quote builder and the **"PK Estimator"** name
+    everywhere; **Properties UI** (CRUD on the client page, link a job to a saved site,
+    property shown on job detail); **Client `tags[]` + `preferredPaymentMethod`** (edited in
+    the client form, payment preference defaults the invoice); **dashboard** now shows
+    Outstanding / Collected-this-month / Active bids from the invoice data. 44/44 tests green,
+    build clean. See `BUILD_LOG.md` → "M5" for the full per-file rundown.
+- **Next (open, pick by user priority):** local photos (Dexie blobs, no cloud), a
+  deposits/change-order data model **once the user defines the fields/money rules** (still
+  undefined — do not invent), or the separate **"Claude design" UI pass** the user mentioned.
+  Cloud sync (Supabase, §9) is still the big deferred follow-up — do not start it without a
+  go-ahead.
 
 ## Authoritative docs (read in this order)
 
@@ -96,9 +107,9 @@ quote → iOS share sheet → AirPrint; the PDF prints scope language only (no h
 
 ## Known gaps / watch-outs
 
-- **JSON backup is incomplete:** `BackupPayload` (`src/lib/types.ts` + `backup.ts`) does NOT
-  yet include `rateEntries` or `properties`. Rate Book re-seeds at boot, but properties would
-  not round-trip an export/import. Extend backup before relying on it (slated M4/M5).
+- **JSON backup — FIXED in M5.** `BackupPayload` now includes `rateEntries` + `properties`
+  and they round-trip through `exportAll`/`importAll` (schema bumped to 2). Older v1 backups
+  (no such arrays) still import; the Rate Book re-seeds defaults on the post-import reload.
 - The new quote flow saves as an `Estimate` with `docType:'quote'`, `trade:'general'`, and
   `validUntil`. The existing estimate preview + `estimatePdf` were made calc-mode-aware and
   scope-only for saved quote/invoice PDFs, so saved quotes display/print correctly in ONE
@@ -115,7 +126,9 @@ quote → iOS share sheet → AirPrint; the PDF prints scope language only (no h
 - Guardrails live in `src/lib/estimate/guardrails.ts` and are pure/tested. Thresholds live in
   `Rates` (`hardFloorHourlyCents`, `targetHourlyCents`, `ceilingSqftFloorCents`,
   `windowStandaloneMinimumCents`, `jobMinimumCents`) and are editable in Settings.
-- `Property` entity + repo exist and seed nothing; the Property UI screen is M5.
+- `Property` entity + repo exist; the **Property UI shipped in M5** (`features/properties/
+  PropertyForm.tsx`, client-page Properties section, job ↔ property link, job-detail display).
+  Properties seed nothing (created by the user). `measurements` is still freeform text.
 - Difficulty-modifier percentages live in `Rates.difficultyModifiers` (editable). A Settings
   UI to edit the Rate Book + modifiers isn't built yet — repos support it; add UI when needed.
 - `ratesRepo.get` backfills new default Rates fields onto older seeded rows — keep that when

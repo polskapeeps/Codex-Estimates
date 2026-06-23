@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { Button, Field, Input, Modal, Select, Textarea } from '../../components/ui';
 import { PlusIcon } from '../../components/icons';
 import { ClientForm } from '../clients/ClientForm';
+import { PropertyForm } from '../properties/PropertyForm';
 import { TradePicker } from '../../components/TradePicker';
 import { projectRepo } from '../../data/repositories';
-import { useClients } from '../../data/hooks';
+import { useClients, usePropertiesByClient } from '../../data/hooks';
 import { useUI } from '../../store/ui';
 import { PIPELINE_STATUSES, STATUS_META } from '../../lib/status';
 import type { Project, ProjectStatus, Trade } from '../../lib/types';
@@ -19,6 +20,7 @@ interface ProjectFormProps {
 
 interface FormState {
   clientId: string;
+  propertyId: string;
   title: string;
   address: string;
   trade: Trade;
@@ -29,6 +31,7 @@ interface FormState {
 
 const empty = (clientId = ''): FormState => ({
   clientId,
+  propertyId: '',
   title: '',
   address: '',
   trade: 'painting',
@@ -50,6 +53,8 @@ export function ProjectForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
   const [clientFormOpen, setClientFormOpen] = useState(false);
+  const [propertyFormOpen, setPropertyFormOpen] = useState(false);
+  const properties = usePropertiesByClient(form.clientId || undefined);
 
   useEffect(() => {
     if (!open) return;
@@ -58,6 +63,7 @@ export function ProjectForm({
       project
         ? {
             clientId: project.clientId,
+            propertyId: project.propertyId ?? '',
             title: project.title,
             address: project.address ?? '',
             trade: project.trade,
@@ -89,6 +95,7 @@ export function ProjectForm({
         .filter(Boolean);
       const payload = {
         clientId: form.clientId,
+        propertyId: form.propertyId || undefined,
         title: form.title.trim(),
         address: form.address.trim() || undefined,
         trade: form.trade,
@@ -131,7 +138,9 @@ export function ProjectForm({
             <div className="flex gap-2">
               <Select
                 value={form.clientId}
-                onChange={(e) => set('clientId', e.target.value)}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, clientId: e.target.value, propertyId: '' }))
+                }
                 className="flex-1"
               >
                 <option value="">Select client…</option>
@@ -151,6 +160,32 @@ export function ProjectForm({
               </Button>
             </div>
           </Field>
+
+          {form.clientId && (
+            <Field label="Property" hint="Saved site — reuses its access & ladder notes.">
+              <div className="flex gap-2">
+                <Select
+                  value={form.propertyId}
+                  onChange={(e) => set('propertyId', e.target.value)}
+                  className="flex-1"
+                >
+                  <option value="">None</option>
+                  {(properties ?? []).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.label}
+                    </option>
+                  ))}
+                </Select>
+                <Button
+                  variant="secondary"
+                  leftIcon={<PlusIcon size={18} />}
+                  onClick={() => setPropertyFormOpen(true)}
+                >
+                  New
+                </Button>
+              </div>
+            </Field>
+          )}
 
           <Field label="Job title" required>
             <Input
@@ -208,8 +243,17 @@ export function ProjectForm({
       <ClientForm
         open={clientFormOpen}
         onClose={() => setClientFormOpen(false)}
-        onSaved={(c) => set('clientId', c.id)}
+        onSaved={(c) => setForm((f) => ({ ...f, clientId: c.id, propertyId: '' }))}
       />
+
+      {form.clientId && (
+        <PropertyForm
+          open={propertyFormOpen}
+          onClose={() => setPropertyFormOpen(false)}
+          clientId={form.clientId}
+          onSaved={(p) => set('propertyId', p.id)}
+        />
+      )}
     </>
   );
 }
