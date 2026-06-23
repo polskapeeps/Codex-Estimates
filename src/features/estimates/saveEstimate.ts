@@ -27,6 +27,8 @@ export interface SaveEstimateDraft {
   scopeNotes: string;
   ratesSnapshot: Rates;
   totals: Totals;
+  validUntil?: string;
+  dueDate?: string;
   status: 'draft' | 'final';
 }
 
@@ -50,6 +52,8 @@ export async function saveEstimate(draft: SaveEstimateDraft): Promise<SaveResult
     ratesSnapshot: draft.ratesSnapshot,
     totals: draft.totals,
     scopeNotes: draft.scopeNotes,
+    validUntil: draft.validUntil,
+    dueDate: draft.dueDate,
     status: draft.status,
   };
 

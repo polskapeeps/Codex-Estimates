@@ -32,6 +32,12 @@ export const DEFAULT_RATES: Rates = {
   taxPct: 0.08,
   taxAppliesTo: 'materials',
   confidenceBandPct: 0.12,
+  // pricing guardrails (v2 §5)
+  hardFloorHourlyCents: 6500,
+  targetHourlyCents: 7000,
+  ceilingSqftFloorCents: 100,
+  windowStandaloneMinimumCents: 15000,
+  jobMinimumCents: 0,
   // difficulty/uplift toggles (v2 §15.C) — editable; pct is a decimal
   difficultyModifiers: [
     { id: 'access_ladder', label: 'Ladder / high access', pct: 0.1 },

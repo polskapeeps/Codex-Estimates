@@ -32,6 +32,7 @@ function headerBlock(ctx: EstimatePdfContext): Content {
   const { company, estimate } = ctx;
   const logo = usableLogo(company.logoDataUrl);
   const laborOnly = estimate.pricingMode === 'labor_only';
+  const docLabel = laborOnly ? 'LABOR-ONLY ESTIMATE' : (estimate.docType ?? 'estimate').toUpperCase();
 
   const companyStack: Content[] = [
     { text: company.name || 'Your Company', style: 'company' },
@@ -58,7 +59,7 @@ function headerBlock(ctx: EstimatePdfContext): Content {
         width: 'auto',
         stack: [
           {
-            text: laborOnly ? 'LABOR-ONLY ESTIMATE' : 'ESTIMATE',
+            text: docLabel,
             style: 'docTitle',
             alignment: 'right',
           },
@@ -70,6 +71,26 @@ function headerBlock(ctx: EstimatePdfContext): Content {
             margin: [0, 2, 0, 0],
           },
           { text: `Version ${estimate.version}`, alignment: 'right', color: MUTED, fontSize: 9 },
+          ...(estimate.docType === 'quote' && estimate.validUntil
+            ? [
+                {
+                  text: `Valid until ${formatDate(estimate.validUntil)}`,
+                  alignment: 'right',
+                  color: MUTED,
+                  fontSize: 9,
+                } as Content,
+              ]
+            : []),
+          ...(estimate.docType === 'invoice' && estimate.dueDate
+            ? [
+                {
+                  text: `Due ${formatDate(estimate.dueDate)}`,
+                  alignment: 'right',
+                  color: MUTED,
+                  fontSize: 9,
+                } as Content,
+              ]
+            : []),
         ],
       },
     ],
@@ -157,6 +178,39 @@ function paintingBreakdown(ctx: EstimatePdfContext): Content[] {
 
 function generalBreakdown(ctx: EstimatePdfContext): Content[] {
   const comp = computeGeneral(ctx.estimate.lineItems);
+  const scopeOnly = ctx.estimate.docType === 'quote' || ctx.estimate.docType === 'invoice';
+  if (scopeOnly) {
+    const body: Content[][] = [
+      [
+        { text: 'Scope of work', style: 'th' },
+        { text: 'Amount', style: 'th', alignment: 'right' },
+      ],
+    ];
+    for (const item of comp.lineItems) {
+      const isCredit = item.calcMode === 'credit';
+      body.push([
+        {
+          text: item.clientDescription?.trim() || 'Scope to be confirmed',
+          color: isCredit ? '#15803d' : INK,
+        },
+        {
+          text: isCredit
+            ? `(${formatMoney(Math.abs(lineItemAmount(item)))})`
+            : formatMoney(lineItemAmount(item)),
+          alignment: 'right',
+          color: isCredit ? '#15803d' : INK,
+        },
+      ]);
+    }
+    return [
+      { text: 'Scope & pricing', style: 'sectionTitle' },
+      {
+        table: { headerRows: 1, widths: ['*', 'auto'], body },
+        layout: tableLayout(),
+      },
+    ];
+  }
+
   const body: Content[][] = [
     [
       { text: 'Description', style: 'th' },
@@ -197,6 +251,7 @@ function totalsBlock(ctx: EstimatePdfContext): Content {
   if (!laborOnly) {
     rows.push(['Subtotal', formatMoney(t.subtotal)]);
     rows.push(['Markup', formatMoney(t.markup)]);
+    if (t.discounts !== 0) rows.push(['Credit applied', `(${formatMoney(Math.abs(t.discounts))})`]);
     rows.push(['Tax', formatMoney(t.tax)]);
   }
 

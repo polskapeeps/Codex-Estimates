@@ -321,6 +321,42 @@ export function SettingsPage() {
         </div>
       </Section>
 
+      {/* Guardrails */}
+      <Section title="Pricing guardrails">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <MoneyField
+            label="Hard hourly floor"
+            hint="Red warning below this effective hourly rate."
+            cents={draft.hardFloorHourlyCents}
+            onChange={(c) => update({ hardFloorHourlyCents: c })}
+          />
+          <MoneyField
+            label="Hourly target"
+            hint="Yellow warning between the hard floor and this target."
+            cents={draft.targetHourlyCents}
+            onChange={(c) => update({ targetHourlyCents: c })}
+          />
+          <MoneyField
+            label="Ceiling sqft floor"
+            hint="Flags ceiling labor priced below this per square foot."
+            cents={draft.ceilingSqftFloorCents}
+            onChange={(c) => update({ ceilingSqftFloorCents: c })}
+          />
+          <MoneyField
+            label="Standalone window minimum"
+            hint="Flags small non-bundled window jobs below this floor."
+            cents={draft.windowStandaloneMinimumCents}
+            onChange={(c) => update({ windowStandaloneMinimumCents: c })}
+          />
+          <MoneyField
+            label="Job minimum"
+            hint="$0 disables this optional warning."
+            cents={draft.jobMinimumCents}
+            onChange={(c) => update({ jobMinimumCents: c })}
+          />
+        </div>
+      </Section>
+
       {/* General estimates */}
       <Section title="General estimates">
         <Link

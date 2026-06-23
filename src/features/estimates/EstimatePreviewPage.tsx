@@ -14,8 +14,11 @@ import { estimateRepo, projectRepo } from '../../data/repositories';
 import { useUI } from '../../store/ui';
 import { computePainting } from '../../lib/estimate/painting';
 import { computeGeneral } from '../../lib/estimate/general';
-import { lineItemAmount } from '../../lib/estimate/lineItems';
+import { computeDocumentEstimate, lineItemAmount } from '../../lib/estimate/lineItems';
+import { evaluateGuardrails } from '../../lib/estimate/guardrails';
 import { calcModeMeta } from '../documents/documentLine';
+import { GuardrailPanel } from '../documents/GuardrailPanel';
+import { DocumentViewToggle, type DocumentViewMode } from '../documents/DocumentViewToggle';
 import { buildEstimateDocDefinition } from '../pdf/estimatePdf';
 import { downloadEstimatePdf, printEstimatePdf } from '../pdf/pdfClient';
 import { formatMoney } from '../../lib/money';
@@ -32,6 +35,7 @@ export function EstimatePreviewPage() {
   const rates = useRates();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [viewMode, setViewMode] = useState<DocumentViewMode>('internal');
 
   const painting = useMemo(
     () =>
@@ -43,6 +47,32 @@ export function EstimatePreviewPage() {
   const general = useMemo(
     () => (estimate?.trade === 'general' ? computeGeneral(estimate.lineItems) : null),
     [estimate],
+  );
+  const documentEstimate = useMemo(
+    () =>
+      estimate?.trade === 'general'
+        ? computeDocumentEstimate(estimate.lineItems, estimate.ratesSnapshot, {
+            materialsMode: project?.materialsMode,
+          })
+        : null,
+    [estimate, project?.materialsMode],
+  );
+  const guardrails = useMemo(
+    () =>
+      estimate && documentEstimate
+        ? evaluateGuardrails({
+            lineItems: estimate.lineItems,
+            computation: documentEstimate.computation,
+            totals: estimate.totals,
+            rates: estimate.ratesSnapshot,
+            materialsMode: project?.materialsMode,
+            bundled: project?.bundled,
+            docType: estimate.docType,
+            validUntil: estimate.validUntil,
+            dueDate: estimate.dueDate,
+          })
+        : [],
+    [documentEstimate, estimate, project?.bundled, project?.materialsMode],
   );
   const pricingMode = estimate?.pricingMode ?? 'full';
 
@@ -109,6 +139,9 @@ export function EstimatePreviewPage() {
       />
 
       <div className="mb-5 space-y-2">
+        <div className="flex justify-end">
+          <DocumentViewToggle value={viewMode} onChange={setViewMode} />
+        </div>
         <div className="grid grid-cols-2 gap-2">
           <Button
             leftIcon={<PrinterIcon size={18} />}
@@ -144,6 +177,12 @@ export function EstimatePreviewPage() {
           </Button>
         </div>
       </div>
+
+      {viewMode === 'internal' && guardrails.length > 0 && (
+        <div className="mb-5">
+          <GuardrailPanel warnings={guardrails} />
+        </div>
+      )}
 
       <div className="mb-5">
         <TotalsPanel
@@ -209,19 +248,29 @@ export function EstimatePreviewPage() {
           ) : (
             general.lineItems.map((item) => {
               const isCredit = item.calcMode === 'credit';
+              const scope = item.clientDescription?.trim() || 'Scope to be confirmed';
               return (
                 <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-slate-800">
-                      {item.clientDescription?.trim() || item.description || 'Untitled'}
+                      {viewMode === 'client' ? scope : scope || item.description || 'Untitled'}
                     </p>
-                    <p className="text-xs text-slate-500">
-                      {item.calcMode
-                        ? calcModeMeta(item.calcMode).label
-                        : `${item.qty} ${
-                            LINE_UNITS.find((u) => u.value === item.unit)?.label ?? item.unit
-                          } × ${formatMoney(item.unitCost)}`}
-                    </p>
+                    {viewMode === 'internal' && (
+                      <>
+                        <p className="text-xs text-slate-500">
+                          {item.calcMode
+                            ? `${calcModeMeta(item.calcMode).label} · ${item.qty} ${
+                                LINE_UNITS.find((u) => u.value === item.unit)?.label ?? item.unit
+                              } × ${formatMoney(item.unitCost)}`
+                            : `${item.qty} ${
+                                LINE_UNITS.find((u) => u.value === item.unit)?.label ?? item.unit
+                              } × ${formatMoney(item.unitCost)}`}
+                        </p>
+                        {item.internalNote && (
+                          <p className="truncate text-xs text-slate-400">{item.internalNote}</p>
+                        )}
+                      </>
+                    )}
                   </div>
                   <span
                     className={

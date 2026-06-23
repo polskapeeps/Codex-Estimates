@@ -17,12 +17,15 @@ import {
 } from '../../components/icons';
 import { StatusControl } from './StatusControl';
 import { ProjectForm } from './ProjectForm';
+import { DocumentViewToggle, type DocumentViewMode } from '../documents/DocumentViewToggle';
 import { useClient, useEstimatesByProject, useProject } from '../../data/hooks';
 import { projectRepo } from '../../data/repositories';
 import { useUI } from '../../store/ui';
+import { computeDocumentEstimate } from '../../lib/estimate/lineItems';
+import { evaluateGuardrails } from '../../lib/estimate/guardrails';
 import { formatMoneyWhole, formatRange } from '../../lib/money';
 import { formatDate, formatDateTime, humanize } from '../../lib/format';
-import type { ProjectStatus } from '../../lib/types';
+import type { Estimate, Project, ProjectStatus } from '../../lib/types';
 
 export function JobDetailPage() {
   const { projectId } = useParams();
@@ -34,6 +37,7 @@ export function JobDetailPage() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<DocumentViewMode>('internal');
 
   if (!project) {
     return (
@@ -94,28 +98,43 @@ export function JobDetailPage() {
       </Link>
 
       {/* Estimates */}
-      <SectionTitle>Estimates</SectionTitle>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Documents</h2>
+        <DocumentViewToggle value={viewMode} onChange={setViewMode} />
+      </div>
       {estimates && estimates.length > 0 ? (
         <ul className="mb-5 space-y-2">
-          {[...estimates].reverse().map((est) => (
-            <li key={est.id}>
-              <Link
-                to={`/estimate/${est.id}`}
-                className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 ring-1 ring-slate-200 hover:bg-slate-50"
-              >
-                <FileTextIcon size={20} className="shrink-0 text-slate-400" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-slate-900">
-                    v{est.version} · {formatMoneyWhole(est.totals.total)}
-                  </p>
-                  <p className="truncate text-xs text-slate-500">
-                    {formatRange(est.totals.low, est.totals.total, est.totals.high)}
-                  </p>
-                </div>
-                <span className="shrink-0 text-xs capitalize text-slate-400">{est.status}</span>
-              </Link>
-            </li>
-          ))}
+          {[...estimates].reverse().map((est) => {
+            const warningCount = viewMode === 'internal' ? guardrailCount(est, project) : 0;
+            return (
+              <li key={est.id}>
+                <Link
+                  to={`/estimate/${est.id}`}
+                  className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 ring-1 ring-slate-200 hover:bg-slate-50"
+                >
+                  <FileTextIcon size={20} className="shrink-0 text-slate-400" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-slate-900">
+                      {(est.docType ?? 'estimate').toUpperCase()} v{est.version} ·{' '}
+                      {formatMoneyWhole(est.totals.total)}
+                    </p>
+                    <p className="truncate text-xs text-slate-500">
+                      {viewMode === 'client'
+                        ? scopeSummary(est)
+                        : formatRange(est.totals.low, est.totals.total, est.totals.high)}
+                    </p>
+                  </div>
+                  {warningCount > 0 ? (
+                    <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                      {warningCount}
+                    </span>
+                  ) : (
+                    <span className="shrink-0 text-xs capitalize text-slate-400">{est.status}</span>
+                  )}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       ) : (
         <Card className="mb-5 px-4 py-6 text-center text-sm text-slate-500">
@@ -202,6 +221,38 @@ export function JobDetailPage() {
 function SectionTitle({ children }: { children: ReactNode }) {
   return (
     <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{children}</h2>
+  );
+}
+
+function guardrailCount(est: Estimate, project: Project): number {
+  if (est.trade !== 'general') return 0;
+  const materialsMode = project.materialsMode ?? 'in_estimate';
+  const documentEstimate = computeDocumentEstimate(est.lineItems, est.ratesSnapshot, {
+    materialsMode,
+  });
+  return evaluateGuardrails({
+    lineItems: est.lineItems,
+    computation: documentEstimate.computation,
+    totals: est.totals,
+    rates: est.ratesSnapshot,
+    materialsMode,
+    bundled: project.bundled,
+    docType: est.docType,
+    validUntil: est.validUntil,
+    dueDate: est.dueDate,
+  }).length;
+}
+
+function scopeSummary(est: Estimate): string {
+  if (est.trade === 'painting') {
+    return est.rooms.map((room) => room.label).filter(Boolean).slice(0, 3).join(', ') || 'Painting scope';
+  }
+  return (
+    est.lineItems
+      .map((line) => line.clientDescription?.trim())
+      .filter(Boolean)
+      .slice(0, 2)
+      .join(' · ') || est.scopeNotes || 'Scope to be confirmed'
   );
 }
 

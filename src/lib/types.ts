@@ -192,6 +192,10 @@ export interface Estimate {
   ratesSnapshot: Rates; // freeze rates used at calc time
   totals: Totals;
   scopeNotes?: string; // shown on PDF
+  /** Quote expiration date (v2 §7). Required for quotes once lifecycle lands. */
+  validUntil?: string;
+  /** Invoice due date (v2 §7). Required for invoices once lifecycle lands. */
+  dueDate?: string;
   status: 'draft' | 'final';
   createdAt: string;
   updatedAt: string;
@@ -250,6 +254,12 @@ export interface Rates {
   taxPct: number;
   taxAppliesTo: 'materials' | 'all' | 'none';
   confidenceBandPct: number; // +/- band -> low/high
+  // v2 §5 pricing guardrails (editable thresholds; 0 disables optional minimums)
+  hardFloorHourlyCents: number;
+  targetHourlyCents: number;
+  ceilingSqftFloorCents: number;
+  windowStandaloneMinimumCents: number;
+  jobMinimumCents: number;
   // v2 §15.C: editable difficulty/uplift toggles (the only home for these %s)
   difficultyModifiers: DifficultyModifier[];
   // company (for PDF)

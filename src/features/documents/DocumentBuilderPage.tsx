@@ -22,9 +22,12 @@ import {
   difficultyPctFor,
   lineItemAmount,
 } from '../../lib/estimate/lineItems';
+import { evaluateGuardrails } from '../../lib/estimate/guardrails';
 import { buildQuoteDocDefinition, type QuoteLine } from '../pdf/quotePdf';
 import { downloadEstimatePdf, printEstimatePdf } from '../pdf/pdfClient';
 import { centsToDollars, dollarsToCents, formatMoney } from '../../lib/money';
+import { GuardrailPanel } from './GuardrailPanel';
+import { DocumentViewToggle, type DocumentViewMode } from './DocumentViewToggle';
 import {
   CALC_MODES,
   CATEGORIES,
@@ -59,6 +62,8 @@ export function DocumentBuilderPage() {
   const [category, setCategory] = useState<RateCategory>('painting');
   const [lines, setLines] = useState<LineItem[]>([]);
   const [scopeNotes, setScopeNotes] = useState('');
+  const [validUntil, setValidUntil] = useState(() => dateInputValue(addDays(new Date(), 30)));
+  const [viewMode, setViewMode] = useState<DocumentViewMode>('internal');
   const [busy, setBusy] = useState(false);
 
   const selectedClient = clients?.find((c) => c.id === clientId);
@@ -69,6 +74,21 @@ export function DocumentBuilderPage() {
   const estimate = useMemo(
     () => (rates ? computeDocumentEstimate(lines, rates, { materialsMode }) : null),
     [lines, rates, materialsMode],
+  );
+  const guardrails = useMemo(
+    () =>
+      rates && estimate
+        ? evaluateGuardrails({
+            lineItems: lines,
+            computation: estimate.computation,
+            totals: estimate.totals,
+            rates,
+            materialsMode,
+            docType: 'quote',
+            validUntil,
+          })
+        : [],
+    [estimate, lines, rates, materialsMode, validUntil],
   );
 
   function update(index: number, item: LineItem) {
@@ -89,8 +109,7 @@ export function DocumentBuilderPage() {
     const quoteLines: QuoteLine[] = estimate.computation.lines.map((lc) => ({
       description:
         lc.item.clientDescription?.trim() ||
-        lc.item.description?.trim() ||
-        calcModeMeta(lc.item.calcMode).label,
+        'Scope to be confirmed',
       amount: lc.amount,
       isCredit: lc.bucket === 'credit',
     }));
@@ -105,7 +124,7 @@ export function DocumentBuilderPage() {
       lines: quoteLines,
       totals: estimate.totals,
       materialsMode,
-      validUntil: addDays(new Date(), 30).toISOString(),
+      validUntil: dateInputToIso(validUntil),
       issueDate: new Date().toISOString(),
       scopeNotes: scopeNotes.trim() || undefined,
     } as const;
@@ -154,6 +173,7 @@ export function DocumentBuilderPage() {
         scopeNotes,
         ratesSnapshot: rates,
         totals: estimate.totals,
+        validUntil: dateInputToIso(validUntil),
         status: 'draft',
       });
       toast('Quote saved');
@@ -220,6 +240,13 @@ export function DocumentBuilderPage() {
               <option value="separate">Billed separately (at cost)</option>
             </Select>
           </Field>
+          <Field label="Quote valid until">
+            <Input
+              type="date"
+              value={validUntil}
+              onChange={(e) => setValidUntil(e.target.value)}
+            />
+          </Field>
         </Card>
 
         <Card className="space-y-3 p-4">
@@ -255,9 +282,17 @@ export function DocumentBuilderPage() {
         </Card>
 
         <div>
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Line items
-          </h2>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Line items
+            </h2>
+            <DocumentViewToggle value={viewMode} onChange={setViewMode} />
+          </div>
+          {viewMode === 'internal' && guardrails.length > 0 && (
+            <div className="mb-3">
+              <GuardrailPanel warnings={guardrails} />
+            </div>
+          )}
           <div className="space-y-3">
             {lines.length === 0 && (
               <Card className="px-4 py-6 text-center text-sm text-slate-500">
@@ -269,6 +304,7 @@ export function DocumentBuilderPage() {
                 key={item.id}
                 item={item}
                 modifiers={modifiers}
+                viewMode={viewMode}
                 onChange={(it) => update(i, it)}
                 onRemove={() => remove(i)}
               />
@@ -326,11 +362,13 @@ export function DocumentBuilderPage() {
 function LineRow({
   item,
   modifiers,
+  viewMode,
   onChange,
   onRemove,
 }: {
   item: LineItem;
   modifiers: DifficultyModifier[];
+  viewMode: DocumentViewMode;
   onChange: (item: LineItem) => void;
   onRemove: () => void;
 }) {
@@ -359,17 +397,23 @@ function LineRow({
   return (
     <Card className="space-y-3 p-3">
       <div className="flex items-center gap-2">
-        <Select
-          value={item.calcMode ?? 'per_hour'}
-          onChange={(e) => changeMode(e.target.value as CalcMode)}
-          className="w-40"
-        >
-          {CALC_MODES.map((m) => (
-            <option key={m.value} value={m.value}>
-              {m.label}
-            </option>
-          ))}
-        </Select>
+        {viewMode === 'internal' ? (
+          <Select
+            value={item.calcMode ?? 'per_hour'}
+            onChange={(e) => changeMode(e.target.value as CalcMode)}
+            className="w-40"
+          >
+            {CALC_MODES.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </Select>
+        ) : (
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Scope
+          </span>
+        )}
         <span
           className={
             'ml-auto text-sm font-semibold tabular-nums ' +
@@ -388,72 +432,116 @@ function LineRow({
         </button>
       </div>
 
-      <Input
-        value={item.clientDescription ?? ''}
-        onChange={(e) => set('clientDescription', e.target.value)}
-        placeholder="Scope shown to the client (e.g. 5 fixtures installed incl. high-access)"
-      />
-
-      <div className="grid grid-cols-2 gap-2">
-        <LabeledField label={meta.qtyLabel}>
-          <Input
-            type="number"
-            inputMode="decimal"
-            min="0"
-            step="any"
-            value={item.qty}
-            onChange={(e) => set('qty', Number.parseFloat(e.target.value) || 0)}
-          />
-        </LabeledField>
-        <LabeledField label={meta.rateLabel}>
-          <MoneyInput
-            cents={item.unitCost}
-            onChange={(cents) => set('unitCost', cents)}
-          />
-        </LabeledField>
-        {isPerUnit && (
-          <LabeledField label="Access premium / unit">
-            <MoneyInput
-              cents={item.accessPremiumCents ?? 0}
-              onChange={(cents) => set('accessPremiumCents', cents)}
+      {viewMode === 'client' ? (
+        <Textarea
+          rows={2}
+          value={item.clientDescription ?? ''}
+          onChange={(e) => set('clientDescription', e.target.value)}
+          placeholder="Scope shown to the client"
+        />
+      ) : (
+        <>
+          <LabeledField label="Client scope">
+            <Input
+              value={item.clientDescription ?? ''}
+              onChange={(e) => set('clientDescription', e.target.value)}
+              placeholder="5 fixtures installed incl. high-access work"
             />
           </LabeledField>
-        )}
-        {isCredit && (
-          <LabeledField label="Reason (required)">
-            <Select
-              value={item.reasonTag ?? ''}
-              onChange={(e) => set('reasonTag', (e.target.value || undefined) as ReasonTag | undefined)}
-            >
-              {REASON_TAGS.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </Select>
+          <LabeledField label="Internal note">
+            <Input
+              value={item.internalNote ?? ''}
+              onChange={(e) => set('internalNote', e.target.value)}
+              placeholder="Hours, access, reason, setup, or field math"
+            />
           </LabeledField>
-        )}
-      </div>
+        </>
+      )}
 
-      {showModifiers && (
-        <div>
-          <p className="mb-1.5 text-[11px] font-medium text-slate-500">Difficulty</p>
-          <div className="flex flex-wrap gap-1.5">
-            {modifiers.map((m) => (
-              <Chip
-                key={m.id}
-                active={(item.modifierIds ?? []).includes(m.id)}
-                onClick={() => toggleModifier(m.id)}
-              >
-                {m.label}
-                <span className="ml-1 text-xs opacity-70">+{Math.round(m.pct * 100)}%</span>
-              </Chip>
-            ))}
+      {viewMode === 'internal' && (
+        <>
+          <div className="grid grid-cols-2 gap-2">
+            <LabeledField label={meta.qtyLabel}>
+              <Input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="any"
+                value={item.qty}
+                onChange={(e) => set('qty', Number.parseFloat(e.target.value) || 0)}
+              />
+            </LabeledField>
+            <LabeledField label={meta.rateLabel}>
+              <MoneyInput
+                cents={item.unitCost}
+                onChange={(cents) => set('unitCost', cents)}
+              />
+            </LabeledField>
+            {isPerUnit && (
+              <LabeledField label="Access premium / unit">
+                <MoneyInput
+                  cents={item.accessPremiumCents ?? 0}
+                  onChange={(cents) => set('accessPremiumCents', cents)}
+                />
+              </LabeledField>
+            )}
+            {!isCredit && item.calcMode !== 'per_hour' && item.calcMode !== 'material' && (
+              <LabeledField label="Labor hours">
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.25"
+                  value={item.laborHours ?? 0}
+                  onChange={(e) => set('laborHours', Number.parseFloat(e.target.value) || 0)}
+                />
+              </LabeledField>
+            )}
+            {isCredit && (
+              <LabeledField label="Reason (required)">
+                <Select
+                  value={item.reasonTag ?? ''}
+                  onChange={(e) => set('reasonTag', (e.target.value || undefined) as ReasonTag | undefined)}
+                >
+                  {REASON_TAGS.map((r) => (
+                    <option key={r.value} value={r.value}>
+                      {r.label}
+                    </option>
+                  ))}
+                </Select>
+              </LabeledField>
+            )}
           </div>
-        </div>
+
+          {showModifiers && (
+            <div>
+              <p className="mb-1.5 text-[11px] font-medium text-slate-500">Difficulty</p>
+              <div className="flex flex-wrap gap-1.5">
+                {modifiers.map((m) => (
+                  <Chip
+                    key={m.id}
+                    active={(item.modifierIds ?? []).includes(m.id)}
+                    onClick={() => toggleModifier(m.id)}
+                  >
+                    {m.label}
+                    <span className="ml-1 text-xs opacity-70">+{Math.round(m.pct * 100)}%</span>
+                  </Chip>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </Card>
   );
+}
+
+function dateInputValue(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function dateInputToIso(value: string): string | undefined {
+  return value ? new Date(`${value}T12:00:00`).toISOString() : undefined;
 }
 
 function MoneyInput({ cents, onChange }: { cents: number; onChange: (cents: number) => void }) {

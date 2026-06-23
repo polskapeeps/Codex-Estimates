@@ -1,6 +1,6 @@
 # Estimator Handoff
 
-Last updated: 2026-06-22
+Last updated: 2026-06-23
 
 > **This file supersedes the old 2026-06-07 handoff** (which pointed at `master` /
 > the v1 Claude-spec build + dark mode and is now OUTDATED). Active work is the
@@ -11,7 +11,7 @@ Last updated: 2026-06-22
 
 Another agent session may be building v2 too. Before you commit:
 1. `git fetch origin && git log --oneline -1 origin/codex/v2` — make sure you're not
-   behind. Last known HEAD from this session: **`c685583` (M2)**.
+   behind. Last known code milestone from this session: **M3**.
 2. If `origin/codex/v2` is ahead of you, `git pull --ff-only` first and re-read
    `BUILD_LOG.md` — it's the authoritative running record of what's actually built.
 3. Don't force-push. Don't rebase shared history. Commit per milestone.
@@ -33,17 +33,19 @@ Another agent session may be building v2 too. Before you commit:
     a quote builder at route `/quote/new` that exports a clean **Quote PDF** via pdfmake.
   - **M2** — Rate Book tap-chips (4 categories preloaded from §3) + generalized difficulty
     modifiers (§15.C) + materials in-estimate/separate toggle (§8).
-- **Next: M3** — full **non-blocking** guardrail/warning set (§5 + §15.E: effective-hourly
-  floor, ceiling-giveaway, window-standalone, intentional-discount/reason-tag, job-minimum,
-  no-setup-time, missing-materials, no-markup, ladder-without-modifier, vague-scope,
-  missing-expiration, missing-due-date) **plus** the internal-vs-client view toggle (§6).
-  Then M4 (estimate→quote→invoice, change orders, deposits, receipt/change-order PDFs),
-  then M5 (client/property screens, local photos, dashboard, mobile nav, dark theme).
+  - **M3** — non-blocking guardrail/warning set (§5 + §15.E bullets) + Internal/Client
+    view toggle (§6). Quote expiration is now persisted; saved quote/invoice PDFs print
+    client scope + amounts only.
+- **Next: M4** — Estimate → Quote → Invoice conversion without retyping, invoice fields,
+  paid status, due dates/terms, deposits/change orders where scoped, and invoice/receipt/
+  change-order PDFs. Then M5 (client/property screens, local photos, dashboard, mobile nav,
+  dark theme).
 
 ## Authoritative docs (read in this order)
 
 1. `BUILD_LOG.md` — **the running record.** Exactly what changed per milestone + how to test.
-2. `ESTIMATOR_SPEC_v2.md` — the v2 spec. **v2 wins all conflicts with v1.**
+2. `ESTIMATOR_SPEC_v2.md` — the v2 spec. **v2 wins all conflicts with v1.** This file is
+   now present in the repo root (copied from the Desktop source on 2026-06-23).
 3. `ESTIMATOR_SPEC.md` (v1) + `CLAUDE.md` — architecture baseline + hard rules.
 
 Note: the milestone list references a **§15 (15.A–15.K)** that is NOT present in the spec
@@ -80,7 +82,7 @@ genuine ambiguity to the user rather than guessing.
 ## How to run / test
 
 ```bash
-npm test                 # vitest — expect 33/33 green (incl. the locked Bozena test)
+npm test                 # vitest — expect 41/41 green (incl. the locked Bozena test)
 npm run build            # tsc --noEmit && vite build — must pass (pdfmake chunk-size
                          # warning is known + non-blocking)
 npm run dev -- --host    # LAN dev server; open the printed Network: URL on an iPhone
@@ -97,9 +99,13 @@ quote → iOS share sheet → AirPrint; the PDF prints scope language only (no h
 - **JSON backup is incomplete:** `BackupPayload` (`src/lib/types.ts` + `backup.ts`) does NOT
   yet include `rateEntries` or `properties`. Rate Book re-seeds at boot, but properties would
   not round-trip an export/import. Extend backup before relying on it (slated M4/M5).
-- The new quote flow saves as an `Estimate` with `docType:'quote'`, `trade:'general'`. The
-  existing estimate preview + `estimatePdf` were made calc-mode-aware so saved quotes display
-  correctly in ONE flow — don't fork a parallel preview.
+- The new quote flow saves as an `Estimate` with `docType:'quote'`, `trade:'general'`, and
+  `validUntil`. The existing estimate preview + `estimatePdf` were made calc-mode-aware and
+  scope-only for saved quote/invoice PDFs, so saved quotes display/print correctly in ONE
+  flow — don't fork a parallel preview.
+- Guardrails live in `src/lib/estimate/guardrails.ts` and are pure/tested. Thresholds live in
+  `Rates` (`hardFloorHourlyCents`, `targetHourlyCents`, `ceilingSqftFloorCents`,
+  `windowStandaloneMinimumCents`, `jobMinimumCents`) and are editable in Settings.
 - `Property` entity + repo exist and seed nothing; the Property UI screen is M5.
 - Difficulty-modifier percentages live in `Rates.difficultyModifiers` (editable). A Settings
   UI to edit the Rate Book + modifiers isn't built yet — repos support it; add UI when needed.

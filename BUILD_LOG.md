@@ -110,3 +110,42 @@ known pdfmake chunk-size warning). Not yet driven on a live device — that's th
 
 **Next:** M3 — full guardrail/warning set (§5 + §15.E), all non-blocking, + internal-vs-client
 view toggle (§6).
+
+---
+
+## M3 — Pricing guardrails + internal/client views ✅
+
+- **Authoritative v2 spec restored to the repo:** copied `ESTIMATOR_SPEC_v2.md` from the
+  Desktop into the repo root, matching the handoff's doc order. The old `ESTIMATOR_SPEC.md`
+  remains v1 carryover context only.
+- **Pure guardrail engine:** added `src/lib/estimate/guardrails.ts` plus 8 focused tests.
+  It evaluates the full M3 warning set from §5 + the milestone bullets: effective-hourly
+  floor, ceiling/sqft giveaway, standalone window floor, credit reason tags, optional job
+  minimum, no setup time, missing materials, no markup, ladder/access without uplift,
+  vague client scope, missing quote expiration, and missing invoice due date.
+- **Editable thresholds live in Rates:** added Settings fields for hard hourly floor,
+  hourly target, ceiling sqft floor, standalone window minimum, and optional job minimum.
+  Defaults seed from `defaults.ts`; `ratesRepo.get` backfills them for older local stores.
+- **Quote builder UI:** added Internal/Client view toggle. Internal view shows math fields,
+  internal notes, labor-hours visibility for non-hourly lines, difficulty/access controls,
+  and guardrail badges. Client view collapses rows to printable scope language + amounts.
+  Quotes now persist `validUntil` (default +30 days).
+- **Saved document views:** Job detail and estimate preview now share the Internal/Client
+  toggle. Internal view surfaces warning counts/panels; Client view summarizes scope. Saved
+  quote/invoice PDFs now print scope + amounts only (no qty/rate/unit-cost leakage) and show
+  valid-until / due-date when present.
+- **Scope-only PDF fallback:** missing client scope prints as "Scope to be confirmed" instead
+  of falling back to internal rate labels.
+
+**Verify:** `npm test` **41/41 green** (Bozena still locked at $1,977.89), `npm run build`
+clean (only the known pdfmake chunk-size warning).
+
+**Known gaps (deferred):**
+- Invoice lifecycle/conversion UI is still M4. M3 can warn on missing invoice due dates once
+  invoices exist, but it does not create invoices yet.
+- JSON backup still does not include `rateEntries` / `properties`.
+- Settings can tune guardrail thresholds; full Rate Book + difficulty modifier editing UI is
+  still later.
+
+**Next:** M4 — Estimate → Quote → Invoice conversion, invoice fields/paid status, deposits /
+change orders where scoped, and receipt/change-order/invoice PDFs.
