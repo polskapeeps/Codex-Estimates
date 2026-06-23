@@ -79,6 +79,8 @@ export interface Totals {
   labor: number;
   subtotal: number;
   markup: number;
+  /** Σ credit line items (≤ 0). v2 §4.2; older saved totals omit it (treat as 0). */
+  discounts: number;
   tax: number;
   total: number;
   low: number;

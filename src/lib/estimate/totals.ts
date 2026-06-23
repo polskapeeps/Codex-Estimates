@@ -5,6 +5,8 @@ export interface TotalsInput {
   materials: number; // cents
   labor: number; // cents
   laborHours: number;
+  /** Σ credit line items, as a non-positive cents value (v2 §4.2). Default 0. */
+  discounts?: number;
 }
 
 /**
@@ -34,9 +36,12 @@ export function computeTotals(
           : 0;
   const tax = roundCents(taxableBase * rates.taxPct);
 
-  const total = subtotal + markup + tax;
+  // Credits/discounts are applied in every mode (v2 §4.2). They arrive as a
+  // non-positive value; each credit line item must carry a reason tag (§5.4).
+  const discounts = input.discounts ?? 0;
+  const total = subtotal + markup + tax + discounts;
   const low = roundCents(total * (1 - rates.confidenceBandPct));
   const high = roundCents(total * (1 + rates.confidenceBandPct));
 
-  return { materials, laborHours, labor, subtotal, markup, tax, total, low, high };
+  return { materials, laborHours, labor, subtotal, markup, discounts, tax, total, low, high };
 }
