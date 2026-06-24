@@ -18,7 +18,7 @@ saved comparison branches, verification status, and next actions.
 | M2 Painting engine + calculator (+ unit tests) | ✅ |
 | M3 General module + reusable Library | ✅ |
 | M4 Estimate PDF / print + JSON backup | ✅ |
-| M5 Cloud sync (Supabase) | ⛔ Phase 2 — not started |
+| M5 Cloud sync (Supabase) | code complete in v2 M6; live project activation pending |
 | M6 AI smart-notes (`/api/ai-parse`) | ⛔ Phase 2 — not started |
 | M7 Polish (kanban, photos, dark mode, Tauri) | partial: dark mode done; remaining polish Phase 2 |
 

@@ -1,6 +1,6 @@
 // Repository interfaces — the mandatory data-access seam (spec §4).
 // Feature code depends ONLY on these interfaces, never on Dexie directly,
-// so a cloud-sync backend (§11) can be dropped in later without rewrites.
+// so the cloud-sync layer can reconcile records without feature rewrites.
 import type {
   Client,
   Estimate,

@@ -9,6 +9,7 @@ import type {
   RateEntry,
   Rates,
 } from '../lib/types';
+import type { SyncChange, SyncStateRow } from './syncTypes';
 
 /** The rates singleton is stored as one row with a fixed id. */
 export const RATES_ID = 'default';
@@ -31,6 +32,8 @@ export class EstimatorDB extends Dexie {
   // v2 additions
   rateEntries!: Table<RateEntry, string>; // editable Rate Book (§3)
   properties!: Table<Property, string>; // saved job sites (§15.A)
+  syncChanges!: Table<SyncChange, string>;
+  syncState!: Table<SyncStateRow, string>;
 
   constructor() {
     super('estimator');
@@ -47,6 +50,10 @@ export class EstimatorDB extends Dexie {
     this.version(2).stores({
       rateEntries: 'id, category, sortOrder',
       properties: 'id, clientId, updatedAt',
+    });
+    this.version(3).stores({
+      syncChanges: 'key, entityType, changedAt',
+      syncState: 'id',
     });
   }
 }

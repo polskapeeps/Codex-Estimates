@@ -17,6 +17,7 @@ import { makeDefaultRates } from '../../lib/estimate/defaults';
 import { useUI } from '../../store/ui';
 import { cn } from '../../lib/cn';
 import type { BackupPayload, Rates } from '../../lib/types';
+import { CloudSyncSettings } from './CloudSyncSettings';
 
 export function SettingsPage() {
   const rates = useRates();
@@ -364,10 +365,17 @@ export function SettingsPage() {
         </Link>
       </Section>
 
+      <Section
+        title="Cloud sync"
+        note="Private cross-device sync while keeping the app fully usable offline."
+      >
+        <CloudSyncSettings />
+      </Section>
+
       {/* Backup & data */}
       <Section
         title="Backup & data"
-        note="Move data between devices (phone ↔ PC) until cloud sync lands."
+        note="Keep a portable safety copy even when cloud sync is enabled."
       >
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button

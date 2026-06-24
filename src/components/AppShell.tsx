@@ -10,6 +10,7 @@ import {
 } from './icons';
 import { Button, Toaster } from './ui';
 import { cn } from '../lib/cn';
+import { CloudSyncStatus } from './CloudSyncStatus';
 
 type IconType = ComponentType<{ size?: number; className?: string }>;
 
@@ -92,11 +93,7 @@ export function AppShell() {
         </nav>
 
         <div className="mt-auto flex items-center gap-2.5 rounded-xl border border-white/[0.05] bg-white/[0.025] px-3.5 py-3">
-          <span className="h-2 w-2 rounded-full bg-[#7fbf95] shadow-[0_0_9px_rgba(127,191,149,0.7)]" />
-          <span className="flex flex-col leading-tight">
-            <span className="text-xs font-semibold text-[#c6bca8]">Local-first</span>
-            <span className="mt-0.5 text-[11px] text-[#7c7463]">Offline ready</span>
-          </span>
+          <CloudSyncStatus />
         </div>
       </aside>
 

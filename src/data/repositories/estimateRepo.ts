@@ -2,6 +2,7 @@ import { db } from '../db';
 import { newId, nowIso } from '../../lib/ids';
 import type { Estimate } from '../../lib/types';
 import type { EstimateInput, EstimatePatch, EstimateRepository } from './interfaces';
+import { makeSyncChange, notifyLocalSyncChange } from './syncQueue';
 
 class DexieEstimateRepository implements EstimateRepository {
   get(id: string): Promise<Estimate | undefined> {
@@ -34,19 +35,33 @@ class DexieEstimateRepository implements EstimateRepository {
       createdAt: now,
       updatedAt: now,
     };
-    await db.estimates.add(estimate);
+    await db.transaction('rw', db.estimates, db.syncChanges, async () => {
+      await db.estimates.add(estimate);
+      await db.syncChanges.put(makeSyncChange('estimates', estimate.id, 'upsert', now));
+    });
+    notifyLocalSyncChange();
     return estimate;
   }
 
   async update(id: string, patch: EstimatePatch): Promise<Estimate> {
-    await db.estimates.update(id, { ...patch, updatedAt: nowIso() });
+    const now = nowIso();
+    await db.transaction('rw', db.estimates, db.syncChanges, async () => {
+      await db.estimates.update(id, { ...patch, updatedAt: now });
+      await db.syncChanges.put(makeSyncChange('estimates', id, 'upsert', now));
+    });
+    notifyLocalSyncChange();
     const updated = await db.estimates.get(id);
     if (!updated) throw new Error(`Estimate ${id} not found`);
     return updated;
   }
 
   async remove(id: string): Promise<void> {
-    await db.estimates.delete(id);
+    const now = nowIso();
+    await db.transaction('rw', db.estimates, db.syncChanges, async () => {
+      await db.estimates.delete(id);
+      await db.syncChanges.put(makeSyncChange('estimates', id, 'delete', now));
+    });
+    notifyLocalSyncChange();
   }
 }
 

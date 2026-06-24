@@ -21,7 +21,7 @@ export {
 export { exportAll, importAll, BACKUP_SCHEMA_VERSION } from './backup';
 export * from './interfaces';
 
-/** Bundled repositories — the swappable seam for a future sync backend (§11). */
+/** Bundled local repositories — Dexie remains the offline source of truth for cloud sync. */
 export const repositories: Repositories = {
   clients: clientRepo,
   projects: projectRepo,

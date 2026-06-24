@@ -1,6 +1,6 @@
 # Estimator Handoff
 
-Last updated: 2026-06-23 (M5.1 black & gold design integration by Codex)
+Last updated: 2026-06-24 (M6 Supabase cloud-sync implementation by Codex)
 
 > **This file supersedes the old 2026-06-07 handoff** (which pointed at `master` /
 > the v1 Claude-spec build + dark mode and is now OUTDATED). Active work is the
@@ -20,9 +20,10 @@ Another agent session may be building v2 too. Before you commit:
 
 - **Branch:** `codex/v2` (created off `codex/labor-only-simplification`), pushed to
   `origin/codex/v2`. NOT merged to `master`.
-- **What this is:** building **PK Estimator v2** per `ESTIMATOR_SPEC_v2.md`. This pass is
-  **LOCAL ONLY** (Dexie/IndexedDB). No Supabase / auth / cloud sync / cloud photos — that is
-  an explicit separate follow-up, do not start it.
+- **What this is:** building **PK Estimator v2** per `ESTIMATOR_SPEC_v2.md`. Dexie/IndexedDB
+  remains the offline source of truth. M6 now includes optional Supabase auth + record sync, but
+  this checkout is not connected to a live Supabase project yet. Cloud photo storage remains a
+  separate follow-up because there is still no photo UI.
 - **Done (committed + pushed):**
   - **M0** — locked the v2 §4.2 totals formula. The Bozena job (`materials $534.60`,
     `labor $1,078.00`, 20% markup, 8% tax on materials only) computes to **$1,977.89**;
@@ -53,19 +54,30 @@ Another agent session may be building v2 too. Before you commit:
     local invoice documents. No estimate engine, repository, money rule, or backend behavior
     was replaced. The source reference is archived at
     `design/handoffs/black-gold-redesign/`. 44/44 tests green; build and visual QA clean.
-- **Next (open, pick by user priority):** local photos (Dexie blobs, no cloud), a
+  - **M6 / Phase C sync implementation** (Codex, 2026-06-24) — added the Supabase-backed,
+    local-first sync layer behind the existing Dexie repositories: durable outbox, tombstones,
+    per-record last-write-wins reconciliation, race protection, realtime/reconnect/app-focus
+    retries, email/password auth UI, account binding, shell status, RLS migration, environment
+    template, deployment guide, and IndexedDB integration tests. Current data entities sync;
+    photo blobs remain excluded because no photo UI exists yet. **Code is complete but not live
+    activated:** this checkout has no Supabase project URL/key, so project creation, migration,
+    Vercel variables, and the two-device smoke test are the immediate next step. 49/49 tests
+    green; build clean.
+- **Next (required activation):** follow `SUPABASE_SETUP.md`, starting on the PC that holds the
+  authoritative local data, then verify a harmless edit in both PC→phone and phone→PC directions.
+  Also run the still-pending real-device Invoice PDF + iPhone AirPrint acceptance test.
+- **After activation (optional product work):** local/cloud photos, job templates, duplicate-job,
+  richer Rate Book/settings editing, or a
   deposits/change-order data model **once the user defines the fields/money rules** (still
-  undefined — do not invent), richer Rate Book/settings editing, or user-directed design
-  refinements after reviewing M5.1.
-  Cloud sync (Supabase, §9) is still the big deferred follow-up — do not start it without a
-  go-ahead.
+  undefined — do not invent).
 
 ## Authoritative docs (read in this order)
 
 1. `BUILD_LOG.md` — **the running record.** Exactly what changed per milestone + how to test.
 2. `ESTIMATOR_SPEC_v2.md` — the v2 spec. **v2 wins all conflicts with v1.** This file is
    now present in the repo root (copied from the Desktop source on 2026-06-23).
-3. `ESTIMATOR_SPEC.md` (v1) + `CLAUDE.md` — architecture baseline + hard rules.
+3. `SUPABASE_SETUP.md` — exact cloud project, SQL, environment, and first-device activation steps.
+4. `ESTIMATOR_SPEC.md` (v1) + `CLAUDE.md` — architecture baseline + hard rules.
 
 Note: the milestone list references a **§15 (15.A–15.K)** that is NOT present in the spec
 file (it ends at §14). Build §15 items from the milestone bullets + best judgment; flag
@@ -101,7 +113,7 @@ genuine ambiguity to the user rather than guessing.
 ## How to run / test
 
 ```bash
-npm test                 # vitest — expect 44/44 green (incl. the locked Bozena test)
+npm test                 # vitest — expect 49/49 green (incl. the locked Bozena test)
 npm run build            # tsc --noEmit && vite build — must pass (pdfmake chunk-size
                          # warning is known + non-blocking)
 npm run dev -- --host    # LAN dev server; open the printed Network: URL on an iPhone
@@ -118,6 +130,11 @@ quote → iOS share sheet → AirPrint; the PDF prints scope language only (no h
 - **JSON backup — FIXED in M5.** `BackupPayload` now includes `rateEntries` + `properties`
   and they round-trip through `exportAll`/`importAll` (schema bumped to 2). Older v1 backups
   (no such arrays) still import; the Rate Book re-seeds defaults on the post-import reload.
+- **Cloud sync code shipped in M6, activation pending.** Dexie remains authoritative offline;
+  Supabase sync starts only when the build has the two VITE environment variables and the user
+  signs in. Run `supabase/migrations/202606240001_estimator_cloud_sync.sql` first. The local DB
+  binds to the first sync account to prevent accidental cross-account uploads. Photo blobs do not
+  sync yet; all currently used records do.
 - The new quote flow saves as an `Estimate` with `docType:'quote'`, `trade:'general'`, and
   `validUntil`. The existing estimate preview + `estimatePdf` were made calc-mode-aware and
   scope-only for saved quote/invoice PDFs, so saved quotes display/print correctly in ONE

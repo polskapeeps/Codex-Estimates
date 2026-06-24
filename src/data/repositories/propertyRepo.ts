@@ -6,6 +6,7 @@ import type {
   PropertyPatch,
   PropertyRepository,
 } from './interfaces';
+import { makeSyncChange, notifyLocalSyncChange } from './syncQueue';
 
 class DexiePropertyRepository implements PropertyRepository {
   getAll(): Promise<Property[]> {
@@ -23,19 +24,33 @@ class DexiePropertyRepository implements PropertyRepository {
   async create(input: PropertyInput): Promise<Property> {
     const now = nowIso();
     const property: Property = { ...input, id: newId(), createdAt: now, updatedAt: now };
-    await db.properties.add(property);
+    await db.transaction('rw', db.properties, db.syncChanges, async () => {
+      await db.properties.add(property);
+      await db.syncChanges.put(makeSyncChange('properties', property.id, 'upsert', now));
+    });
+    notifyLocalSyncChange();
     return property;
   }
 
   async update(id: string, patch: PropertyPatch): Promise<Property> {
-    await db.properties.update(id, { ...patch, updatedAt: nowIso() });
+    const now = nowIso();
+    await db.transaction('rw', db.properties, db.syncChanges, async () => {
+      await db.properties.update(id, { ...patch, updatedAt: now });
+      await db.syncChanges.put(makeSyncChange('properties', id, 'upsert', now));
+    });
+    notifyLocalSyncChange();
     const updated = await db.properties.get(id);
     if (!updated) throw new Error(`Property ${id} not found`);
     return updated;
   }
 
   async remove(id: string): Promise<void> {
-    await db.properties.delete(id);
+    const now = nowIso();
+    await db.transaction('rw', db.properties, db.syncChanges, async () => {
+      await db.properties.delete(id);
+      await db.syncChanges.put(makeSyncChange('properties', id, 'delete', now));
+    });
+    notifyLocalSyncChange();
   }
 }
 

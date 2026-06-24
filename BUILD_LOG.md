@@ -1,8 +1,9 @@
 # PK Estimator v2 — Build Log
 
-Running record of the v2 build (extends v1; v2 spec wins conflicts). Local-only
-pass: no Supabase/auth/cloud sync/cloud photos this round. Branch: `codex/v2`
-(off `codex/labor-only-simplification`).
+Running record of the v2 build (extends v1; v2 spec wins conflicts). The build began
+local-only; M6 adds optional Supabase auth + record sync while Dexie remains the offline
+database. Cloud photos are still deferred. Branch: `codex/v2` (off
+`codex/labor-only-simplification`).
 
 Decisions confirmed with the user (recon):
 - **§15**: not present in the attached spec file (it ends at §14). Build each §15
@@ -277,3 +278,53 @@ clean (only the known pdfmake chunk-size warning).
 **Next:** resume product work only after the user reviews the redesign. Existing open choices
 remain local photos, user-defined deposits/change orders, richer Rate Book/settings editing,
 or the separately authorized cloud-sync phase.
+
+---
+
+## M6 / Phase C — Supabase cloud sync (code complete; live activation pending) ✅/⏳
+
+The user confirmed that seamless PC ↔ phone access is the next critical feature. This phase
+implements the deferred v2 §9 sync architecture while preserving Dexie as the offline working
+database. No Supabase project credentials were present on this machine, so the code and database
+migration are complete, but the live account/project and two-device smoke test still need to be
+activated.
+
+- **Local-first outbox (Dexie v3):** added `syncChanges` and `syncState`. Every repository
+  create/update/delete now commits the business record and its sync mutation atomically. Deletes
+  become tombstones, including estimates cascade-deleted with a job. JSON import now queues a
+  complete replacement snapshot plus tombstones for removed records.
+- **Cross-device reconciliation:** `data/cloud/cloudSync.ts` pulls the authenticated user's
+  records, merges them with local records, pushes queued/local-only records, retries on reconnect
+  and app focus, and listens for Supabase Realtime changes. Conflict behavior is last-write-wins
+  per record. Sync timestamps are monotonic so rapid same-millisecond edits cannot collapse into
+  one ambiguous change.
+- **Race protection:** remote data is applied only if the local outbox still matches the mutation
+  inspected by that sync pass. A user edit made while syncing remains queued and wins the next
+  reconciliation pass.
+- **Account safety:** the local database binds to the first authenticated Supabase user. Signing
+  into a different account cannot silently upload the existing local client/job data.
+- **Supabase security/migration:** added
+  `supabase/migrations/202606240001_estimator_cloud_sync.sql` with one flexible JSONB records
+  table, authenticated-owner RLS for every operation, realtime publication, tombstones, and a
+  database trigger that rejects stale client timestamps.
+- **Auth + status UI:** Settings now supports email/password account creation, sign-in, manual
+  sync, sign-out, last-sync/pending/error states, and explains the local-first behavior. The
+  desktop shell status pill reports local-only, syncing, synced, offline, queued, or error state.
+- **Deployment guide:** `.env.example` and `SUPABASE_SETUP.md` document SQL setup, browser-safe
+  publishable keys, Vercel variables, auth URLs, first-device migration, and phone onboarding.
+- **Data covered:** clients, jobs, estimate/quote/invoice documents, properties, line-item
+  library, Rates, and Rate Book entries. Existing attachment blobs are intentionally not included
+  because the app still has no photo UI; photos require a later Supabase Storage pass.
+- **Tests:** added pure conflict tests and fake-IndexedDB integration tests for atomic outbox
+  writes, cloud replacement/acknowledgement, and the mid-sync local-edit race.
+
+**Verify:** `npm test` **49/49 green** (Bozena still $1,977.89), `npm run typecheck` clean,
+`npm run build` clean (known chunk-size warning only), production dependency audit clean.
+
+**Activation checklist (still required):**
+1. Create the Supabase project and run the included migration.
+2. Add `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY` locally and in Vercel.
+3. Sign in first on the PC that holds the authoritative local data and wait for "Up to date."
+4. Sign in on the phone, verify matching data, then edit one harmless field in each direction.
+5. Separately exercise Invoice conversion/PDF and real iPhone AirPrint; those workflows are built
+   but still need the user's live-device acceptance test.
