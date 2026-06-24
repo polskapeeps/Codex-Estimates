@@ -3,9 +3,9 @@ import { cn } from '../../lib/cn';
 import { CheckIcon, XIcon } from '../icons';
 
 const TONE: Record<string, string> = {
-  success: 'bg-slate-900 text-white',
-  error: 'bg-red-600 text-white',
-  info: 'bg-brand-700 text-white',
+  success: 'border border-[#7fbf95]/25 bg-[#1d1810] text-[#8fd0a6]',
+  error: 'border border-[#c87b6b]/30 bg-[#1d1810] text-[#e0a595]',
+  info: 'border border-brand-600/30 bg-[#1d1810] text-brand-500',
 };
 
 export function Toaster() {

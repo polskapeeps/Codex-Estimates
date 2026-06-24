@@ -1,5 +1,5 @@
 // Dependency-free PNG icon generator.
-// Draws the Estimator mark (blue tile + white estimate sheet + green check)
+// Draws the Estimator mark (PK gold tile + charcoal estimate sheet)
 // at the sizes the PWA manifest needs. No native deps — pure Node + zlib.
 import { deflateSync } from 'node:zlib';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -9,10 +9,10 @@ import { dirname, join } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(__dirname, '..', 'public', 'icons');
 
-const BRAND = [29, 78, 216, 255]; // #1d4ed8
-const SHEET = [255, 255, 255, 255];
-const LINE = [191, 219, 254, 255]; // #bfdbfe
-const CHECK = [34, 197, 94, 255]; // #22c55e
+const BRAND = [214, 164, 60, 255]; // #d6a43c
+const SHEET = [29, 24, 16, 255]; // #1d1810
+const LINE = [133, 124, 107, 255]; // #857c6b
+const CHECK = [240, 206, 114, 255]; // #f0ce72
 
 // ---- tiny raster canvas ----
 function makeCanvas(size) {
@@ -79,7 +79,7 @@ function drawIcon(size, { maskPad = false } = {}) {
   fillRect(c, sx + sw * 0.16, sy + sh * 0.2, sw * 0.5, lineH, LINE);
   fillRect(c, sx + sw * 0.16, sy + sh * 0.34, sw * 0.42, lineH, LINE);
 
-  // Bold green check across the lower half = "approved estimate".
+  // Bold gold check across the lower half = "approved estimate".
   const th = Math.max(3, size * 0.06);
   thickLine(c, sx + sw * 0.2, sy + sh * 0.64, sx + sw * 0.4, sy + sh * 0.82, th, CHECK);
   thickLine(c, sx + sw * 0.4, sy + sh * 0.82, sx + sw * 0.78, sy + sh * 0.5, th, CHECK);

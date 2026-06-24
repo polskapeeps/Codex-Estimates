@@ -108,6 +108,35 @@ export function SettingsPage() {
 
       {/* Company */}
       <Section title="Company" note="Shown on estimate PDFs.">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="grid h-24 w-full shrink-0 place-items-center overflow-hidden rounded-[14px] border border-brand-600/25 bg-[#16120b] p-3 sm:w-44">
+            <img
+              src={draft.company.logoDataUrl || '/pk-logo.png'}
+              alt="PK Paints & Renovations logo"
+              className="max-h-full max-w-full object-contain"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <label className="flex h-10 cursor-pointer items-center rounded-xl border border-white/[0.09] bg-[#16120b] px-3 text-sm font-semibold text-slate-700 hover:border-brand-600/30 hover:text-brand-500">
+              {draft.company.logoDataUrl ? 'Replace logo' : 'Use another logo'}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => e.target.files?.[0] && onLogo(e.target.files[0])}
+              />
+            </label>
+            {draft.company.logoDataUrl && (
+              <button
+                type="button"
+                onClick={() => updateCompany({ logoDataUrl: '' })}
+                className="px-2 text-sm font-semibold text-red-600"
+              >
+                Use PK logo
+              </button>
+            )}
+          </div>
+        </div>
         <Field label="Business name">
           <Input
             value={draft.company.name}
@@ -134,39 +163,6 @@ export function SettingsPage() {
             value={draft.company.address ?? ''}
             onChange={(e) => updateCompany({ address: e.target.value })}
           />
-        </Field>
-        <Field label="Logo" hint="Optional — appears on the PDF header.">
-          <div className="flex items-center gap-3">
-            {draft.company.logoDataUrl ? (
-              <img
-                src={draft.company.logoDataUrl}
-                alt="Logo"
-                className="h-12 w-12 rounded-lg object-contain ring-1 ring-slate-200"
-              />
-            ) : (
-              <div className="grid h-12 w-12 place-items-center rounded-lg bg-slate-100 text-xs text-slate-400">
-                None
-              </div>
-            )}
-            <label className="cursor-pointer rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
-              {draft.company.logoDataUrl ? 'Replace' : 'Upload'}
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && onLogo(e.target.files[0])}
-              />
-            </label>
-            {draft.company.logoDataUrl && (
-              <button
-                type="button"
-                onClick={() => updateCompany({ logoDataUrl: '' })}
-                className="text-sm text-red-600"
-              >
-                Remove
-              </button>
-            )}
-          </div>
         </Field>
       </Section>
 
@@ -382,7 +378,7 @@ export function SettingsPage() {
           >
             Export all data
           </Button>
-          <label className="flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-white text-sm font-medium text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+          <label className="flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/[0.09] bg-[#16120b] text-sm font-semibold text-slate-700 hover:border-brand-600/30 hover:text-brand-500">
             <UploadIcon size={18} />
             Import data
             <input
@@ -410,8 +406,8 @@ export function SettingsPage() {
 
       {/* Sticky save bar */}
       {dirty && (
-        <div className="fixed inset-x-0 bottom-16 z-40 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur pb-safe md:bottom-0 md:pl-60">
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
+        <div className="fixed inset-x-0 bottom-16 z-40 border-t border-brand-600/30 bg-[#16120b]/95 px-4 py-3 backdrop-blur pb-safe md:bottom-0 md:pl-[272px]">
+          <div className="mx-auto flex max-w-[1000px] items-center justify-between gap-3">
             <span className="text-sm text-slate-500">Unsaved changes</span>
             <div className="flex gap-2">
               <Button
@@ -463,7 +459,7 @@ function Section({
 }) {
   return (
     <section className="mb-5">
-      <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
+      <h2 className="pk-section-label">{title}</h2>
       {note && <p className="mb-2 text-xs text-slate-500">{note}</p>}
       <Card className={cn('space-y-4 p-4', !note && 'mt-2')}>{children}</Card>
     </section>

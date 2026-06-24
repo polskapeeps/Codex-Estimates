@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button, Chip, EmptyState, Input, PageHeader, Select } from '../../components/ui';
 import { JobsIcon, PlusIcon, SearchIcon } from '../../components/icons';
 import { useAllEstimates, useClients, useProjects } from '../../data/hooks';
@@ -25,6 +26,7 @@ const SORT_OPTIONS: { value: string; label: string; key: SortKey; dir: SortDir }
 ];
 
 export function JobsPage() {
+  const navigate = useNavigate();
   const projects = useProjects();
   const clients = useClients();
   const estimates = useAllEstimates();
@@ -63,9 +65,23 @@ export function JobsPage() {
         title="Jobs"
         subtitle={hasJobs ? `${visible.length} of ${projects!.length}` : undefined}
         right={
-          <Button size="sm" leftIcon={<PlusIcon size={18} />} onClick={() => setFormOpen(true)}>
-            New job
-          </Button>
+          <>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="hidden sm:inline-flex"
+              onClick={() => setFormOpen(true)}
+            >
+              New job
+            </Button>
+            <Button
+              size="sm"
+              leftIcon={<PlusIcon size={18} />}
+              onClick={() => navigate('/quote/new')}
+            >
+              New quote
+            </Button>
+          </>
         }
       />
 
@@ -101,7 +117,7 @@ export function JobsPage() {
             </Select>
           </div>
 
-          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
             {PIPELINE_STATUSES.map((s) => (
               <Chip
                 key={s}
@@ -149,7 +165,7 @@ export function JobsPage() {
       ) : visible.length === 0 ? (
         <EmptyState title="No matches" message="Adjust your search or filters." />
       ) : (
-        <ul className="space-y-2">
+        <ul className="pk-list">
           {visible.map((row) => (
             <li key={row.project.id}>
               <JobCard row={row} />

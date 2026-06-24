@@ -12,38 +12,38 @@ export interface StatusMeta {
 export const STATUS_META: Record<ProjectStatus, StatusMeta> = {
   lead: {
     label: 'Lead',
-    chipClass: 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200',
-    dotClass: 'bg-slate-400',
+    chipClass: 'status-chip status-chip--neutral',
+    dotClass: 'status-dot--neutral',
   },
   estimating: {
     label: 'Estimating',
-    chipClass: 'bg-blue-100 text-blue-700 ring-1 ring-inset ring-blue-200',
-    dotClass: 'bg-blue-500',
+    chipClass: 'status-chip status-chip--gold',
+    dotClass: 'status-dot--gold',
   },
   bid_sent: {
     label: 'Bid sent',
-    chipClass: 'bg-amber-100 text-amber-800 ring-1 ring-inset ring-amber-200',
-    dotClass: 'bg-amber-500',
+    chipClass: 'status-chip status-chip--gold',
+    dotClass: 'status-dot--gold',
   },
   won: {
     label: 'Won',
-    chipClass: 'bg-green-100 text-green-700 ring-1 ring-inset ring-green-200',
-    dotClass: 'bg-green-500',
+    chipClass: 'status-chip status-chip--positive',
+    dotClass: 'status-dot--positive',
   },
   lost: {
     label: 'Lost',
-    chipClass: 'bg-red-100 text-red-700 ring-1 ring-inset ring-red-200',
-    dotClass: 'bg-red-500',
+    chipClass: 'status-chip status-chip--negative',
+    dotClass: 'status-dot--negative',
   },
   on_hold: {
     label: 'On hold',
-    chipClass: 'bg-purple-100 text-purple-700 ring-1 ring-inset ring-purple-200',
-    dotClass: 'bg-purple-500',
+    chipClass: 'status-chip status-chip--neutral',
+    dotClass: 'status-dot--neutral',
   },
   archived: {
     label: 'Archived',
-    chipClass: 'bg-slate-200 text-slate-500 ring-1 ring-inset ring-slate-300',
-    dotClass: 'bg-slate-400',
+    chipClass: 'status-chip status-chip--muted',
+    dotClass: 'status-dot--neutral',
   },
 };
 

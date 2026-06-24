@@ -208,7 +208,7 @@ export function ClientDetailPage() {
       </div>
 
       {rows.length > 0 ? (
-        <ul className="space-y-2">
+        <ul className="pk-list">
           {rows.map((row) => (
             <li key={row.project.id}>
               <JobCard row={row} />

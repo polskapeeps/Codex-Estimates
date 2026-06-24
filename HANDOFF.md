@@ -1,6 +1,6 @@
 # Estimator Handoff
 
-Last updated: 2026-06-23 (M5 pickup by Claude)
+Last updated: 2026-06-23 (M5.1 black & gold design integration by Codex)
 
 > **This file supersedes the old 2026-06-07 handoff** (which pointed at `master` /
 > the v1 Claude-spec build + dark mode and is now OUTDATED). Active work is the
@@ -46,9 +46,17 @@ Another agent session may be building v2 too. Before you commit:
     the client form, payment preference defaults the invoice); **dashboard** now shows
     Outstanding / Collected-this-month / Active bids from the invoice data. 44/44 tests green,
     build clean. See `BUILD_LOG.md` → "M5" for the full per-file rundown.
+  - **M5.1** (Codex, 2026-06-23) — integrated the supplied Claude Design black-and-gold
+    handoff as the production UI: warm charcoal/gold tokens, Hanken Grotesk, redesigned
+    responsive app shell, dashboard, job rows, client cards, shared controls, branded
+    settings/logo/PWA assets, and a new `/invoices` organizer view backed by the existing
+    local invoice documents. No estimate engine, repository, money rule, or backend behavior
+    was replaced. The source reference is archived at
+    `design/handoffs/black-gold-redesign/`. 44/44 tests green; build and visual QA clean.
 - **Next (open, pick by user priority):** local photos (Dexie blobs, no cloud), a
   deposits/change-order data model **once the user defines the fields/money rules** (still
-  undefined — do not invent), or the separate **"Claude design" UI pass** the user mentioned.
+  undefined — do not invent), richer Rate Book/settings editing, or user-directed design
+  refinements after reviewing M5.1.
   Cloud sync (Supabase, §9) is still the big deferred follow-up — do not start it without a
   go-ahead.
 

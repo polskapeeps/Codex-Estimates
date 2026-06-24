@@ -66,6 +66,13 @@ export const SettingsIcon = (p: IconProps) => (
   </SvgIcon>
 );
 
+export const ReceiptIcon = (p: IconProps) => (
+  <SvgIcon {...p}>
+    <path d="M6 3h12v18l-3-1.8L12 21l-3-1.8L6 21Z" />
+    <path d="M9.5 8h5M9.5 12h5M9.5 16h3" />
+  </SvgIcon>
+);
+
 export const MoonIcon = (p: IconProps) => (
   <SvgIcon {...p}>
     <path d="M12 3a6.8 6.8 0 0 0 7.1 10.8A8 8 0 1 1 12 3Z" />

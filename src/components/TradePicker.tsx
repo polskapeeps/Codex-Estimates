@@ -25,16 +25,18 @@ export function TradePicker({
             type="button"
             onClick={() => onChange(v)}
             className={cn(
-              'flex items-center gap-3 rounded-xl border-2 px-3 py-3 text-left transition-colors',
+              'flex items-center gap-3 rounded-[14px] border px-3 py-3 text-left',
               active
-                ? 'border-brand-600 bg-brand-50'
-                : 'border-slate-200 bg-white hover:border-slate-300',
+                ? 'border-brand-700 bg-brand-600/[0.1]'
+                : 'border-white/[0.08] bg-[#1d1810] hover:border-brand-600/25',
             )}
           >
             <span
               className={cn(
                 'grid h-9 w-9 shrink-0 place-items-center rounded-lg',
-                active ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500',
+                active
+                  ? 'bg-brand-600/[0.16] text-brand-500'
+                  : 'bg-[#16120b] text-slate-500',
               )}
             >
               <Icon size={20} />

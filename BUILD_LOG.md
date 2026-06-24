@@ -240,3 +240,40 @@ organizer screens.
 **Next:** local photos (Dexie blobs, no cloud), or a deposits/change-order data model once the
 user defines it, or the "Claude design" UI pass. Cloud sync (Supabase, §9) remains the big
 separate follow-up.
+
+---
+
+## M5.1 — Black & gold design integration ✅
+
+Codex paused feature/backend expansion at the user's request and integrated the supplied
+Claude Design handoff as the app's production visual system. The original prototype remains
+archived at `design/handoffs/black-gold-redesign/`; it was moved out of generated `dist/` so
+future builds cannot erase it.
+
+- **Warm black + restrained gold system:** Hanken Grotesk, charcoal surfaces, gold active
+  states/CTAs, warm text hierarchy, input focus rings, status treatments, cards, modals,
+  steppers, chips, scrollbars, and the subtle radial background now match the handoff.
+- **Responsive shell:** 272px desktop sidebar with PK lockup, quote-first CTA, Dashboard /
+  Jobs / Clients / Invoices / Settings navigation, and local-first status. Mobile retains the
+  fast center quote FAB, four daily-use tabs, and a dedicated Settings shortcut.
+- **Dashboard/layout:** greeting + live date, clearer high-value stat cards, quote and
+  painting quick actions, and a unified recent-jobs list using real local data.
+- **Jobs + clients:** denser gold-accented job rows; quote-first header action while preserving
+  manual job creation; responsive client card grid with initials, real job counts, and billed
+  invoice totals.
+- **Invoices view:** new `/invoices` organizer screen derived entirely from existing local
+  invoice documents (outstanding, paid this month, due/partial/paid/overdue status, links to
+  the saved document). No new backend or money model was introduced.
+- **Production workflows preserved:** v2 Rate Book quote builder, painting calculator, guardrails,
+  internal/client views, repository boundary, lifecycle conversion, and cents-based engines were
+  retained rather than replacing them with the prototype's sample data or simplified math.
+- **Brand assets:** supplied PK logo added to Settings; favicon/PWA icons, manifest colors, and
+  browser theme color updated to black and gold.
+
+**Visual QA:** rendered locally at desktop and phone widths across Dashboard, New Quote,
+Invoices, and Settings shell states. **Verify:** `npm test` **44/44 green**; `npm run build`
+clean (only the known pdfmake chunk-size warning).
+
+**Next:** resume product work only after the user reviews the redesign. Existing open choices
+remain local photos, user-defined deposits/change orders, richer Rate Book/settings editing,
+or the separately authorized cloud-sync phase.

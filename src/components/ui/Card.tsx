@@ -5,7 +5,7 @@ export function Card({ className, children, ...rest }: HTMLAttributes<HTMLDivEle
   return (
     <div
       className={cn(
-        'rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm dark:bg-slate-900 dark:ring-slate-800',
+        'rounded-[18px] border border-white/[0.07] bg-[#1d1810] shadow-[0_8px_24px_rgba(0,0,0,0.28)]',
         className,
       )}
       {...rest}

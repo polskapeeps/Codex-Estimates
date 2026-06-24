@@ -27,7 +27,7 @@ export function NumberStepper({
   return (
     <div
       className={cn(
-        'inline-flex h-11 items-stretch overflow-hidden rounded-xl bg-white ring-1 ring-inset ring-slate-300 dark:bg-slate-900 dark:ring-slate-700',
+        'inline-flex h-11 items-stretch overflow-hidden rounded-xl border border-white/[0.09] bg-[#16120b]',
         className,
       )}
     >
@@ -36,7 +36,7 @@ export function NumberStepper({
         aria-label={`Decrease ${ariaLabel ?? ''}`.trim()}
         onClick={() => set(value - step)}
         disabled={value <= min}
-        className="flex w-11 items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-800"
+        className="flex w-11 items-center justify-center text-slate-500 hover:bg-white/[0.05] disabled:opacity-40"
       >
         <MinusIcon size={18} />
       </button>
@@ -49,14 +49,14 @@ export function NumberStepper({
           const n = Number.parseFloat(e.target.value);
           set(Number.isFinite(n) ? n : min);
         }}
-        className="w-14 border-x border-slate-200 bg-transparent text-center text-base font-semibold text-slate-900 focus:outline-none dark:border-slate-700 dark:text-slate-100"
+        className="w-14 border-x border-white/[0.07] bg-transparent text-center text-base font-bold text-brand-500 focus:outline-none"
       />
       <button
         type="button"
         aria-label={`Increase ${ariaLabel ?? ''}`.trim()}
         onClick={() => set(value + step)}
         disabled={value >= max}
-        className="flex w-11 items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-800"
+        className="flex w-11 items-center justify-center text-brand-500 hover:bg-brand-600/[0.08] disabled:opacity-40"
       >
         <PlusIcon size={18} />
       </button>

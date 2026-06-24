@@ -317,17 +317,17 @@ function PricingModePicker({
     { value: 'labor_only', label: 'Labor only' },
   ];
   return (
-    <div className="grid grid-cols-2 overflow-hidden rounded-xl ring-1 ring-inset ring-slate-300">
+    <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-white/[0.09] bg-[#16120b]">
       {options.map((option) => (
         <button
           key={option.value}
           type="button"
           onClick={() => onChange(option.value)}
           className={cn(
-            'h-11 text-sm font-medium transition-colors',
+            'h-11 text-sm font-semibold',
             value === option.value
-              ? 'bg-brand-600 text-white'
-              : 'bg-white text-slate-600 hover:bg-slate-50',
+              ? 'bg-brand-600/[0.16] text-brand-500'
+              : 'text-slate-500 hover:bg-white/[0.04] hover:text-slate-200',
           )}
         >
           {option.label}

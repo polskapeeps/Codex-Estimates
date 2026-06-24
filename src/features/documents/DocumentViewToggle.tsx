@@ -10,15 +10,17 @@ export function DocumentViewToggle({
   onChange: (value: DocumentViewMode) => void;
 }) {
   return (
-    <div className="grid grid-cols-2 rounded-xl bg-slate-100 p-1 text-xs font-semibold text-slate-600">
+    <div className="grid grid-cols-2 rounded-xl border border-white/[0.06] bg-[#16120b] p-1 text-xs font-semibold text-slate-500">
       {(['internal', 'client'] as const).map((mode) => (
         <button
           key={mode}
           type="button"
           onClick={() => onChange(mode)}
           className={cn(
-            'rounded-lg px-3 py-1.5 capitalize transition-colors',
-            value === mode ? 'bg-white text-slate-900 shadow-sm' : 'hover:text-slate-900',
+            'rounded-lg px-3 py-1.5 capitalize',
+            value === mode
+              ? 'bg-brand-600/[0.16] text-brand-500'
+              : 'hover:text-slate-200',
           )}
         >
           {mode}

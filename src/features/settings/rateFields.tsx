@@ -26,7 +26,7 @@ export function MoneyField({
           min="0"
           value={centsToDollars(cents)}
           onChange={(e) => onChange(dollarsToCents(Number.parseFloat(e.target.value) || 0))}
-          className="pl-7"
+          className="pl-7 font-bold text-brand-500"
         />
       </div>
     </Field>
@@ -55,7 +55,7 @@ export function PercentField({
           min="0"
           value={Math.round(value * 1000) / 10}
           onChange={(e) => onChange((Number.parseFloat(e.target.value) || 0) / 100)}
-          className="pr-8"
+          className="pr-8 font-bold text-brand-500"
         />
         <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
           %
@@ -91,7 +91,7 @@ export function NumField({
           min="0"
           value={value}
           onChange={(e) => onChange(Number.parseFloat(e.target.value) || 0)}
-          className={suffix ? 'pr-12' : undefined}
+          className={suffix ? 'pr-12 font-bold text-brand-500' : 'font-bold text-brand-500'}
         />
         {suffix && (
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">

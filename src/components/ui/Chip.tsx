@@ -17,10 +17,10 @@ export function Chip({
       type="button"
       onClick={onClick}
       className={cn(
-        'whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium ring-1 ring-inset transition-colors',
+        'whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-semibold',
         active
-          ? 'bg-brand-700 text-white ring-brand-700'
-          : 'bg-white text-slate-600 ring-slate-300 hover:bg-slate-50',
+          ? 'border-brand-600/45 bg-brand-600/[0.13] text-[#f0ce72]'
+          : 'border-white/10 bg-transparent text-slate-500 hover:border-brand-600/30 hover:bg-brand-600/[0.05] hover:text-slate-200',
         className,
       )}
     >

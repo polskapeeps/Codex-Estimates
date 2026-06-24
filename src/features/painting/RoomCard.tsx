@@ -89,17 +89,17 @@ export function RoomCard({
           />
         </CounterRow>
         <CounterRow label="Prep">
-          <div className="inline-flex h-11 overflow-hidden rounded-xl ring-1 ring-inset ring-slate-300">
+          <div className="inline-flex h-11 overflow-hidden rounded-xl border border-white/[0.09] bg-[#16120b]">
             {PREP_LEVELS.map((p) => (
               <button
                 key={p.value}
                 type="button"
                 onClick={() => set('prepLevel', p.value as PrepLevel)}
                 className={cn(
-                  'px-2.5 text-xs font-medium transition-colors',
+                  'px-2.5 text-xs font-semibold',
                   room.prepLevel === p.value
-                    ? 'bg-brand-600 text-white'
-                    : 'bg-white text-slate-600 hover:bg-slate-50',
+                    ? 'bg-gradient-to-br from-[#f0ce72] to-[#d6a43c] text-[#1a1407]'
+                    : 'text-slate-500 hover:bg-white/[0.04] hover:text-slate-200',
                 )}
               >
                 {p.label}
@@ -111,7 +111,7 @@ export function RoomCard({
 
       {/* Live per-room readout */}
       {computation && (
-        <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+      <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-[#16120b] px-3 py-2 text-xs text-slate-500">
           <span>
             {Math.round(computation.appliedSqft)} sqft painted
             {room.walls && ` · ${Math.round(computation.wallNet)} sqft walls`}
@@ -166,10 +166,10 @@ function SurfaceToggle({
       type="button"
       onClick={onClick}
       className={cn(
-        'h-11 rounded-xl text-sm font-medium ring-1 ring-inset transition-colors',
+        'h-11 rounded-xl border text-sm font-semibold',
         active
-          ? 'bg-brand-600 text-white ring-brand-600'
-          : 'bg-white text-slate-600 ring-slate-300 hover:bg-slate-50',
+          ? 'border-brand-600/45 bg-brand-600/[0.15] text-brand-500'
+          : 'border-white/[0.09] bg-[#16120b] text-slate-500 hover:border-brand-600/25',
       )}
     >
       {label}

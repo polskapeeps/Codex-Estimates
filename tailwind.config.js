@@ -5,18 +5,20 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Trade-professional brand palette
+        // PK Paints warm gold palette. The app stays dark; these values are
+        // deliberately restrained and used for actions / active states.
         brand: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
+          50: '#2a2111',
+          100: '#3a2c13',
+          500: '#e6bd63',
+          600: '#d6a43c',
+          700: '#c9962f',
+          800: '#a9771e',
         },
       },
       fontFamily: {
         sans: [
+          'Hanken Grotesk',
           'system-ui',
           '-apple-system',
           'Segoe UI',

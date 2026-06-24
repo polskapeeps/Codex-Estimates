@@ -27,17 +27,17 @@ export function TotalsPanel({
   const laborOnly = pricingMode === 'labor_only';
 
   const body = (
-    <div className="mx-auto w-full max-w-3xl">
+    <div className="mx-auto w-full max-w-[1000px]">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
+        className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left sm:px-5"
       >
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
             {laborOnly ? 'Labor only' : 'Estimate'}
           </p>
-          <p className="text-2xl font-bold tabular-nums text-slate-900">
+          <p className="text-[30px] font-extrabold tracking-[-0.04em] tabular-nums text-brand-500 md:text-[36px]">
             {formatMoneyWhole(totals.total)}
           </p>
         </div>
@@ -53,10 +53,10 @@ export function TotalsPanel({
         </div>
       </button>
 
-      {action && <div className="px-4 pb-3">{action}</div>}
+      {action && <div className="px-4 pb-3 sm:px-5">{action}</div>}
 
       {open && (
-        <div className="border-t border-slate-100 px-4 py-3">
+        <div className="border-t border-white/[0.06] px-4 py-3 sm:px-5">
           {extra}
           {laborOnly ? (
             <dl className="space-y-1.5 text-sm">
@@ -106,13 +106,13 @@ export function TotalsPanel({
 
   if (sticky) {
     return (
-      <div className="fixed inset-x-0 bottom-16 z-40 border-t border-slate-200 bg-white/97 shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.15)] backdrop-blur pb-safe md:bottom-0 md:pl-60">
+      <div className="fixed inset-x-0 bottom-16 z-40 border-t border-brand-600/35 bg-[#16120b]/95 shadow-[0_-12px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl pb-safe md:bottom-0 md:pl-[272px]">
         {body}
       </div>
     );
   }
 
-  return <div className="rounded-2xl bg-white ring-1 ring-slate-200">{body}</div>;
+  return <div className="rounded-[18px] border border-white/[0.07] bg-[#1d1810]">{body}</div>;
 }
 
 function Row({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
